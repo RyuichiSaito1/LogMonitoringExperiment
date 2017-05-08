@@ -12,6 +12,7 @@ object LogMonitoringExperiment {
   final val threadCount = 2
   final val batchDuration = 2
 
+  // args example: localhost:2181 test YUI 2
   def main(args: Array[String]): Unit = {
 
     if (args.length < 4) {
@@ -27,16 +28,20 @@ object LogMonitoringExperiment {
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
     val stream = KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
 
-      stream.foreachRDD { line =>
-        var isContents = false
-        if (line.collect().contains("EXP-") || isContents) {
-          val filteredLine = line
-          isContents = true
-          filteredLine.saveAsTextFile("output/errorLog")
-        } else {
-          isContents = false
-        }
+    stream.foreachRDD { line =>
+      var isContents = false
+      println("Hello World")
+      println(line)
+      if (line.collect().contains("EXP-") || isContents) {
+        println(line)
+        val filteredLine = line
+        isContents = true
+        filteredLine.saveAsTextFile("output/errorLog")
+      } else {
+        isContents = false
       }
-
     }
+    ssc.start()
+    ssc.awaitTermination()
   }
+}
