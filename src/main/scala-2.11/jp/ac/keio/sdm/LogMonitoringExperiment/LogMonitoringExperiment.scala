@@ -26,9 +26,9 @@ object LogMonitoringExperiment {
     val ssc = new StreamingContext(sparkConf, Seconds(batchDuration))
     ssc.checkpoint("checkpoint")
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
-    val stream = KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
+    val kafkaStream = KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
 
-    stream.foreachRDD { line =>
+    kafkaStream.foreachRDD { line =>
       var isContents = false
       println("Hello World")
       println(line)
