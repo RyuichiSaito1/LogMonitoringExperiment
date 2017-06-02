@@ -44,4 +44,5 @@ object LogMonitoringExperiment {
     ssc.start()
     ssc.awaitTermination()
   }
+
 }
