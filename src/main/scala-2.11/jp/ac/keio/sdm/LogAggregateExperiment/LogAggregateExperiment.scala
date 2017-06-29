@@ -16,7 +16,6 @@ import kafka.serializer.StringDecoder
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka._
 
-
 /**
   * Created by Ryuichi on 6/2/2017 AD.
   */
@@ -42,33 +41,26 @@ object LogAggregateExperiment {
     val sparkConf = new SparkConf().setMaster(sparkUrl).setAppName("LogAggregateExperiment")
     val sc = new SparkContext(sparkConf)
     val ssc = new StreamingContext(sc, Seconds(2))
-
     val sqlContext = new SQLContext(sc)
 
-    // ssc.checkpoint("checkpoint")
+    /*ssc.checkpoint("checkpoint")*/
 
     val topicsSet = topics.split(",").toSet
     val kafkaParams = Map[String, String]("metadata.broker.list" -> brokers)
-    // val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
     val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
       ssc, kafkaParams, topicsSet)
     // "map(_._2)" equals "map(x => (x._2))"
     // x._2 returns the second element of a tuple
-    /*val lines = messages.map(_._2)
-    val words = lines.flatMap(_.split(" "))*/
-    // "_ + _" equals "(x,y)=> x + y"
-    /*val wordCounts = words.map(x => (x, 1L)).reduceByKey(_ + _)
-    wordCounts.print()*/
-    import sqlContext.implicits._
     val lines = messages.map(_._2)
+
+    import sqlContext.implicits._
     // https://spark.apache.org/docs/latest/streaming-programming-guide.html#design-patterns-for-using-foreachrdd
      lines.foreachRDD(jsonRDD => {
-    //messages.foreachRDD(jsonRDD => {
-      val data = sqlContext.read.json(jsonRDD)
-      data.createOrReplaceTempView("log")
-      val resultSet = sqlContext.sql("select * from log")
+       val data = sqlContext.read.json(jsonRDD)
+       data.createOrReplaceTempView("log")
+       val resultSet = sqlContext.sql("SELECT * FROM log")
        resultSet.show()
-      resultSet.map(t => "Value: " + t(0)).collect().foreach(println)
+       /*resultSet.map(t => "Value: " + t(0)).collect().foreach(println)*/
     })
 
     /*val words = lines.flatMap(_.split(" "))
@@ -105,5 +97,4 @@ object LogAggregateExperiment {
       .format("console")
       .start()*/
   }
-
 }
