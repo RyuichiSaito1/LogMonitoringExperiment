@@ -8,7 +8,6 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions.from_json
-import org.apache.spark.sql.SQLContext
 import kafka.serializer.StringDecoder
 
 import kafka.serializer.StringDecoder
@@ -22,6 +21,8 @@ import org.apache.spark.streaming.kafka._
 object LogAggregateExperiment {
 
   final val threadCount = 2
+  final val applicationName = "LogAggregateExperiment"
+  final val batchDuration = 2
 
   def main(args: Array[String]) {
 
@@ -38,10 +39,15 @@ object LogAggregateExperiment {
 
     val Array(brokers, topics) = args
     val sparkUrl = "local[" + threadCount + "]"
-    val sparkConf = new SparkConf().setMaster(sparkUrl).setAppName("LogAggregateExperiment")
+    val sparkConf = new SparkConf().setMaster(sparkUrl).setAppName(applicationName)
     val sc = new SparkContext(sparkConf)
-    val ssc = new StreamingContext(sc, Seconds(2))
-    val sqlContext = new SQLContext(sc)
+    val ssc = new StreamingContext(sc, Seconds(batchDuration))
+    val spark = SparkSession
+      .builder()
+      .appName(applicationName)
+      .getOrCreate()
+
+    import spark.implicits._
 
     /*ssc.checkpoint("checkpoint")*/
 
@@ -53,13 +59,16 @@ object LogAggregateExperiment {
     // x._2 returns the second element of a tuple
     val lines = messages.map(_._2)
 
-    import sqlContext.implicits._
+
     // https://spark.apache.org/docs/latest/streaming-programming-guide.html#design-patterns-for-using-foreachrdd
      lines.foreachRDD(jsonRDD => {
-       val data = sqlContext.read.json(jsonRDD)
+       val data = spark.read.option("wholeFile", true).json(jsonRDD)
+       data.printSchema()
+       data.show()
+       // data.groupBy("message").count().show()
        data.createOrReplaceTempView("log")
-       val resultSet = sqlContext.sql("SELECT * FROM log")
-       resultSet.show()
+       // val df = sqlContext.sql("SELECT * FROM log"
+
        /*resultSet.map(t => "Value: " + t(0)).collect().foreach(println)*/
     })
 
