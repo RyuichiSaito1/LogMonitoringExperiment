@@ -45,6 +45,7 @@ object LogAggregateExperiment {
     val spark = SparkSession
       .builder()
       .appName(applicationName)
+      /*.config("spark.some.config.option", "some-value")*/
       .getOrCreate()
 
     import spark.implicits._
@@ -59,14 +60,14 @@ object LogAggregateExperiment {
     // x._2 returns the second element of a tuple
     val lines = messages.map(_._2)
 
-
     // https://spark.apache.org/docs/latest/streaming-programming-guide.html#design-patterns-for-using-foreachrdd
      lines.foreachRDD(jsonRDD => {
        val data = spark.read.option("wholeFile", true).json(jsonRDD)
-       data.printSchema()
-       data.show()
-       // data.groupBy("message").count().show()
-       data.createOrReplaceTempView("log")
+       if (data.count() > 0) {
+         data.printSchema()
+         data.groupBy("stack_trace_01").count().show(100000)
+       }
+       // data.createOrReplaceTempView("log")
        // val df = sqlContext.sql("SELECT * FROM log"
 
        /*resultSet.map(t => "Value: " + t(0)).collect().foreach(println)*/
