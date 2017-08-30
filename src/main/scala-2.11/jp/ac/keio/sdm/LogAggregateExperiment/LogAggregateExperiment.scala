@@ -34,7 +34,6 @@ object LogAggregateExperiment {
   val StackTrace13 = "stack_trace_13"
   val StackTrace14 = "stack_trace_14"
 
-
   def main(args: Array[String]) {
 
     if (args.length < 2) {
@@ -93,7 +92,7 @@ object LogAggregateExperiment {
          data.show(UpperLimit)
        }
     })
-    
+
     ssc.start()
     ssc.awaitTermination()
   }
