@@ -70,9 +70,9 @@ object LogAggregateExperiment {
      lines.foreachRDD(jsonRDD => {
        val data = spark.read.option("wholeFile", true).json(jsonRDD)
        if (data.count() > 0) {
-         data.printSchema()
          import org.apache.spark.sql.functions._
-         val resultSetByGroupBy = data.groupBy(LogLevel
+         val resultSetByGroupBy = data.groupBy(
+           LogLevel
            ,MultiThreadId
            ,StackTrace01
            ,StackTrace02
@@ -88,6 +88,7 @@ object LogAggregateExperiment {
            ,StackTrace12
            ,StackTrace13
            ,StackTrace14).agg(min(Message).alias(Message))
+
          val dateTime = new DateTime()
          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
          val formattedDateTime = formatter.print(dateTime)
