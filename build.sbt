@@ -22,7 +22,9 @@ libraryDependencies ++= Seq(
   // Scala Logging dependencies
   "org.slf4j" % "slf4j-api" % "1.7.25" % "compile",
   "ch.qos.logback" % "logback-classic" % "1.2.2" % "runtime",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0" % "compile"
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0" % "compile",
+  // scala-time
+  "org.scala-tools.time" % "time_2.9.1" % "0.5"
 )
 
 assemblyMergeStrategy in assembly := {

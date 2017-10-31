@@ -5,6 +5,8 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.kafka.KafkaUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 /**
   * Created by Ryuichi on 6/2/2017 AD.
@@ -16,6 +18,7 @@ object LogAggregateExperiment {
   val ApplicationName = "LogAggregateExperiment"
   val BatchDuration = 2
   val UpperLimit = 10000
+  val DateTime = "date_time"
   val LogLevel = "log_level"
   val MultiThreadId = "multi_thread_id"
   val Message = "message"
@@ -50,8 +53,6 @@ object LogAggregateExperiment {
     val Array(brokers, topics) = args
     val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
-    // val sc = new SparkContext(sparkConf)
-    // val ssc = new StreamingContext(sc, Seconds(BatchDuration))
     val spark = SparkSession
       .builder()
       .appName(ApplicationName)
@@ -70,7 +71,6 @@ object LogAggregateExperiment {
        val data = spark.read.option("wholeFile", true).json(jsonRDD)
        if (data.count() > 0) {
          data.printSchema()
-         // data.groupBy("stack_trace_01").count().show(upperLimit)
          import org.apache.spark.sql.functions._
          val resultSetByGroupBy = data.groupBy(LogLevel
            ,MultiThreadId
@@ -87,9 +87,33 @@ object LogAggregateExperiment {
            ,StackTrace11
            ,StackTrace12
            ,StackTrace13
-           ,StackTrace14).agg(min(Message))
-         resultSetByGroupBy.show(UpperLimit)
-         data.show(UpperLimit)
+           ,StackTrace14).agg(min(Message).alias(Message))
+         val dateTime = new DateTime()
+         val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+         val formattedDateTime = formatter.print(dateTime)
+         val printingResultSetByGroupBy = resultSetByGroupBy.withColumn(DateTime, lit(formattedDateTime))
+            .select(DateTime
+              ,Message
+              ,LogLevel
+              ,MultiThreadId
+              ,StackTrace01
+              ,StackTrace02
+              ,StackTrace03
+              ,StackTrace04
+              ,StackTrace05
+              ,StackTrace06
+              ,StackTrace07
+              ,StackTrace08
+              ,StackTrace09
+              ,StackTrace10
+              ,StackTrace11
+              ,StackTrace12
+              ,StackTrace13
+              ,StackTrace14)
+         printingResultSetByGroupBy.show(UpperLimit)
+         // org.apache.spark.rdd#coalesce : Return a new RDD that is reduced into numPartitions partitions.
+         printingResultSetByGroupBy.rdd.coalesce(1, true).saveAsTextFile("output/log")
+         printingResultSetByGroupBy.write.parquet("output/parquet")
        }
     })
 
