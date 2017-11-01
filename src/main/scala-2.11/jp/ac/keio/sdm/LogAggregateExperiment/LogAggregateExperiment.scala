@@ -36,6 +36,7 @@ object LogAggregateExperiment {
   val StackTrace12 = "stack_trace_12"
   val StackTrace13 = "stack_trace_13"
   val StackTrace14 = "stack_trace_14"
+  val PartitionNum = 1
   // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/logs/error"
   val SavingDirectoryForErrorLog = "logs/error"
   // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/logs/error_sample"
@@ -117,8 +118,8 @@ object LogAggregateExperiment {
               ,StackTrace14)
          printingResultSetByGroupBy.show(UpperLimit)
          // org.apache.spark.rdd#coalesce : Return a new RDD that is reduced into numPartitions partitions.
-         printingResultSetByGroupBy.rdd.coalesce(1, true).saveAsTextFile(SavingDirectoryForErrorLog)
-         printingResultSetByGroupBy.coalesce(1).write.mode("overwrite")parquet(SavingDirectoryForSampleData)
+         printingResultSetByGroupBy.rdd.coalesce(PartitionNum, true).saveAsTextFile(SavingDirectoryForErrorLog)
+         printingResultSetByGroupBy.coalesce(PartitionNum).write.mode("overwrite")parquet(SavingDirectoryForSampleData)
        }
     })
 
