@@ -25,7 +25,7 @@ object OutliersDetectingExperiment {
       .appName(ApplicationName)
       .getOrCreate()
 
-    val errorFileDF = spark.read.parquet("output/parquet/part-00000-954010b6-3fb5-4deb-a5b3-c7b46da8148a.snappy.parquet")
+    val errorFileDF = spark.read.parquet("output/parquet")
     errorFileDF.createOrReplaceTempView("errorFile")
     val errorFileTV = spark.sql("SELECT * FROM errorFile")
     errorFileDF.show()

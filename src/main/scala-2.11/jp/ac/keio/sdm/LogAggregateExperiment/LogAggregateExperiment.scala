@@ -114,7 +114,7 @@ object LogAggregateExperiment {
          printingResultSetByGroupBy.show(UpperLimit)
          // org.apache.spark.rdd#coalesce : Return a new RDD that is reduced into numPartitions partitions.
          printingResultSetByGroupBy.rdd.coalesce(1, true).saveAsTextFile("output/log")
-         printingResultSetByGroupBy.coalesce(1).write.parquet("output/parquet")
+         printingResultSetByGroupBy.coalesce(1).write.mode("overwrite")parquet("output/parquet")
        }
     })
 
