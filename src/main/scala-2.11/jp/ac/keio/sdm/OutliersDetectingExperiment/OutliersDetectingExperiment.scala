@@ -15,6 +15,8 @@ object OutliersDetectingExperiment {
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "OutliersDetectingExperiment"
   val BatchDuration = 15
+  // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/logs/error_sample"
+  val SavingDirectoryForSampleData = "logs/error_sample"
 
   def main(args: Array[String]) {
 
@@ -25,10 +27,11 @@ object OutliersDetectingExperiment {
       .appName(ApplicationName)
       .getOrCreate()
 
-    val errorFileDF = spark.read.parquet("output/parquet")
+    val errorFileDF = spark.read.parquet(SavingDirectoryForSampleData)
     errorFileDF.createOrReplaceTempView("errorFile")
-    val errorFileTV = spark.sql("SELECT * FROM errorFile")
-    errorFileDF.show()
+    val errorFileTV = spark.sql("SELECT message FROM errorFile")
+    import spark.implicits._
+    errorFileTV.map(attributes => "message: " + attributes(0)).show()
 
   }
 
