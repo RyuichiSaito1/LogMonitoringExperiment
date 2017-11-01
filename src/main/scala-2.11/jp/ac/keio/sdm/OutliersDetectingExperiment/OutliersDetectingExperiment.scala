@@ -1,10 +1,8 @@
 package jp.ac.keio.sdm.OutliersDetectingExperiment
 
-import org.apache.spark.ml.clustering.KMeans
-import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
-import org.apache.spark.ml.linalg.{Vector, Vectors}
+import org.apache.spark.SparkConf
+import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.{SparkConf, SparkContext}
 // import org.apache.spark.mllib.feature.{HashingTF, IDF}
 
 /**
@@ -12,7 +10,35 @@ import org.apache.spark.{SparkConf, SparkContext}
   */
 object OutliersDetectingExperiment {
 
+
   val ThreadCount = 2
+  val SparkUrl = "local[" + ThreadCount + "]"
+  val ApplicationName = "OutliersDetectingExperiment"
+  val BatchDuration = 15
+
+  def main(args: Array[String]) {
+
+    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
+    val spark = SparkSession
+      .builder()
+      .appName(ApplicationName)
+      .getOrCreate()
+
+    val errorFileDF = spark.read.parquet("output/parquet/part-00000-954010b6-3fb5-4deb-a5b3-c7b46da8148a.snappy.parquet")
+    errorFileDF.createOrReplaceTempView("errorFile")
+    val errorFileTV = spark.sql("SELECT * FROM errorFile")
+    errorFileDF.show()
+
+  }
+
+
+
+
+
+
+
+  /*val ThreadCount = 2
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "OutliersDetectingExperiment"
   val BatchDuration = 2
@@ -102,7 +128,7 @@ object OutliersDetectingExperiment {
 
     // $example off$
 
-    spark.stop()
+    spark.stop()*/
 
 
     /*val topicsSet = topics.split(",").toSet
@@ -143,6 +169,5 @@ object OutliersDetectingExperiment {
 
     /*ssc.start()
     ssc.awaitTermination()*/
-  }
 
 }
