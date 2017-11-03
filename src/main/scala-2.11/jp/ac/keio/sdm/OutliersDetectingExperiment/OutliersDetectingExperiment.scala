@@ -3,16 +3,15 @@ package jp.ac.keio.sdm.OutliersDetectingExperiment
 import java.io.File
 
 import org.apache.spark.SparkConf
-import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.streaming.{Seconds, StreamingContext}
 // import org.apache.spark.mllib.feature.{HashingTF, IDF}
 
 /**
   * Created by Ryuichi on 9/21/2017 AD.
   */
 object OutliersDetectingExperiment {
-
-
+  
   val ThreadCount = 2
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "OutliersDetectingExperiment"
@@ -29,37 +28,21 @@ object OutliersDetectingExperiment {
       .appName(ApplicationName)
       .getOrCreate()
 
-    /*implicit class FileMonads(f: File) {
-      def check = if (f.exists) Some(f) else None //returns "Maybe" monad
-      def remove = if (f.delete()) Some(f) else None //returns "Maybe" monad
-    }*/
-
-    val errorFileDF = spark.read.parquet("output/parquet")
-    errorFileDF.cache()
-    deleteRecursively(new File("output/parquet"))
-    /*for {
-      foundFile <- new File("logs/error_sample/._SUCCESS.crc").check
-      deletedFile <- foundFile.remove
-    } yield deletedFile*/
-
+    val errorFileDF = spark.read.parquet(SavingDirectoryForSampleData)
     errorFileDF.createOrReplaceTempView("errorFile")
     val errorFileTV = spark.sql("SELECT message FROM errorFile")
     import spark.implicits._
     errorFileTV.map(attributes => "message: " + attributes(0)).show()
+    deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
 
   }
 
-  def deleteRecursively(file: File): Unit = {
+  def deleteDirectoryRecursively(file: File) {
     if (file.isDirectory)
-      file.listFiles.foreach(deleteRecursively)
+      file.listFiles.foreach(deleteDirectoryRecursively)
     if (file.exists && !file.delete)
-      throw new Exception(s"Unable to delete ${file.getAbsolutePath}")
+      throw new Exception(s"Could not delete ${file.getAbsolutePath}")
   }
-
-
-
-
-
 
 
   /*val ThreadCount = 2

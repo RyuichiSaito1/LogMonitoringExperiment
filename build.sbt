@@ -24,7 +24,10 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.2" % "runtime",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0" % "compile",
   // scala-time
-  "org.scala-tools.time" % "time_2.9.1" % "0.5"
+  "org.scala-tools.time" % "time_2.9.1" % "0.5",
+  // scala-io
+  "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.3-1",
+  "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3-1"
 )
 
 assemblyMergeStrategy in assembly := {
