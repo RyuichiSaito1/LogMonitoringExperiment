@@ -20,6 +20,8 @@ object OutliersDetectingExperiment {
   val BatchDuration = 15
   // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/logs/error_sample"
   val SavingDirectoryForSampleData = "logs/error_sample"
+  val KSize = 2
+  val SeedSize = 1L
 
   def main(args: Array[String]) {
 
@@ -54,7 +56,7 @@ object OutliersDetectingExperiment {
     rescaledData.show()
 
     // Design setK and setSeed
-    val kmeans = new KMeans().setK(2).setSeed(1L)
+    val kmeans = new KMeans().setK(KSize).setSeed(SeedSize)
     val model = kmeans.fit(rescaledData)
 
     // Evaluate clustering by computing Within Set Sum of Squared Errors.
