@@ -8,7 +8,6 @@ import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
 import org.apache.spark.ml.linalg.{Vectors, Vector}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-// import org.apache.spark.mllib.feature.{HashingTF, IDF}
 
 /**
   * Created by Ryuichi on 9/21/2017 AD.
@@ -36,26 +35,25 @@ object OutliersDetectingExperiment {
     val errorFileTV = spark.sql("SELECT message FROM errorFile")
     import spark.implicits._
     errorFileTV.map(attributes => "message: " + attributes(0)).show()
-    deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
 
     // Tokenization is the process of taking text (such as a sentence) and breaking it into individual terms (usually words).
     val tokenizer = new Tokenizer().setInputCol("message").setOutputCol("words")
     val wordsData = tokenizer.transform(errorFileDF)
 
+    // Compute Term Frequency.
     // Design NumFeatures.
     val hashingTF = new HashingTF()
       .setInputCol("words").setOutputCol("rawFeatures").setNumFeatures(1000)
     val featurizedData = hashingTF.transform(wordsData)
     featurizedData.show()
 
+    // Compute TFD-IDF.
     val idf = new IDF().setInputCol("rawFeatures").setOutputCol("features")
     val idfModel = idf.fit(featurizedData)
     val rescaledData = idfModel.transform(featurizedData)
-    rescaledData.select("features").take(3).foreach(println)
     rescaledData.show()
 
-    // Design a k-means model.
-    // Consider setK and setSeed
+    // Design setK and setSeed
     val kmeans = new KMeans().setK(2).setSeed(1L)
     val model = kmeans.fit(rescaledData)
 
@@ -72,6 +70,7 @@ object OutliersDetectingExperiment {
     transformedData.show()
 
     val centroids = model.clusterCenters
+    // Define threshold of anomalies detection.
     // Need org.apache.spark.ml.linalg.Vector
     val threshold = transformedData.
       select("prediction", "features").as[(Int, Vector)].
@@ -86,9 +85,10 @@ object OutliersDetectingExperiment {
     }.select(originalCols.head, originalCols.tail:_*)
 
     val anomaly = anomalies.first()
-    val sentence = anomaly.getAs[String]("sentence")
-
+    val sentence = anomaly.getAs[String]("message")
     println(sentence)
+
+    deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
 
     // $example off$
     spark.stop()
