@@ -5,7 +5,7 @@ import java.io.File
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
-import org.apache.spark.ml.linalg.{Vectors, Vector}
+import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
@@ -32,6 +32,7 @@ object OutliersDetectingExperiment {
       .appName(ApplicationName)
       .getOrCreate()
 
+    if (new File(SavingDirectoryForSampleData).exists == false){ return }
     val errorFileDF = spark.read.parquet(SavingDirectoryForSampleData)
     errorFileDF.createOrReplaceTempView("errorFile")
     val errorFileTV = spark.sql("SELECT message FROM errorFile")
