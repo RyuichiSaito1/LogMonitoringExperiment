@@ -40,7 +40,8 @@ object OutliersDetectingExperiment {
     errorFileTV.map(attributes => "message: " + attributes(0)).show()
 
     // Tokenization is the process of taking text (such as a sentence) and breaking it into individual terms (usually words).
-    val tokenizer = new Tokenizer().setInputCol("message").setOutputCol("words")
+    val tokenizer = new Tokenizer()
+      .setInputCol("message").setOutputCol("words")
     val wordsData = tokenizer.transform(errorFileDF)
 
     // Compute Term Frequency.
@@ -51,13 +52,15 @@ object OutliersDetectingExperiment {
     featurizedData.show()
 
     // Compute TFD-IDF.
-    val idf = new IDF().setInputCol("rawFeatures").setOutputCol("features")
+    val idf = new IDF()
+      .setInputCol("rawFeatures").setOutputCol("features")
     val idfModel = idf.fit(featurizedData)
     val rescaledData = idfModel.transform(featurizedData)
     rescaledData.show()
 
     // Design setK and setSeed
-    val kmeans = new KMeans().setK(KSize).setSeed(SeedSize)
+    val kmeans = new KMeans()
+      .setK(KSize).setSeed(SeedSize)
     val model = kmeans.fit(rescaledData)
 
     // Evaluate clustering by computing Within Set Sum of Squared Errors.
