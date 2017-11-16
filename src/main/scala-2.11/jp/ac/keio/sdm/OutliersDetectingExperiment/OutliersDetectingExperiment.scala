@@ -6,6 +6,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
 import org.apache.spark.ml.linalg.{Vector, Vectors}
+import org.apache.spark.sql.functions.regexp_replace
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
@@ -34,6 +35,12 @@ object OutliersDetectingExperiment {
 
     if (new File(SavingDirectoryForSampleData).exists == false){ return }
     val errorFileDF = spark.read.parquet(SavingDirectoryForSampleData)
+    // Check
+    errorFileDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), ".", " "))
+    errorFileDF.show()
+    val analysingDF = spark.sql("SELECT CONCAT(message, ' ', analysedStackTrace01 FROM errorFile")
+    analysingDF.show()
+    
     errorFileDF.createOrReplaceTempView("errorFile")
     val errorFileTV = spark.sql("SELECT message FROM errorFile")
     import spark.implicits._
