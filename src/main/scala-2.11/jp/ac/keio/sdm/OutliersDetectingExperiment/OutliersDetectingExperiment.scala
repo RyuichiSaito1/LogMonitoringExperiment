@@ -82,6 +82,7 @@ object OutliersDetectingExperiment {
     val centroids = model.clusterCenters
     // Define threshold of anomalies detection.
     // Need org.apache.spark.ml.linalg.Vector
+    import spark.implicits._
     val threshold = transformedData.
       select("prediction", "features").as[(Int, Vector)].
       map{ case (cluster, vec) => Vectors.sqdist(centroids(cluster), vec)}.
