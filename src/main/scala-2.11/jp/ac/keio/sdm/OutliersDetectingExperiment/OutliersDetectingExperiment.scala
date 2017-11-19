@@ -35,20 +35,17 @@ object OutliersDetectingExperiment {
 
     if (new File(SavingDirectoryForSampleData).exists == false){ return }
     val errorFileDF = spark.read.parquet(SavingDirectoryForSampleData)
-    // Check
-    errorFileDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), ".", " "))
-    errorFileDF.show()
-    val analysingDF = spark.sql("SELECT CONCAT(message, ' ', analysedStackTrace01 FROM errorFile")
+    val analysedMessageDF = errorFileDF.withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
+    val analysedDF = analysedMessageDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), "\\.", " "))
+    analysedDF.createOrReplaceTempView("errorFile")
+    val analysingDF = spark.sql("SELECT CONCAT(analysedMessage, ' ', analysedStackTrace01) AS messages FROM errorFile")
     analysingDF.show()
-    
-    errorFileDF.createOrReplaceTempView("errorFile")
-    val errorFileTV = spark.sql("SELECT message FROM errorFile")
-    import spark.implicits._
-    errorFileTV.map(attributes => "message: " + attributes(0)).show()
+    // import spark.implicits._
+    // analysingDF.map(attributes => "messages: " + attributes(0)).show()
 
     // Tokenization is the process of taking text (such as a sentence) and breaking it into individual terms (usually words).
     val tokenizer = new Tokenizer()
-      .setInputCol("message").setOutputCol("words")
+      .setInputCol("messages").setOutputCol("words")
     val wordsData = tokenizer.transform(errorFileDF)
 
     // Compute Term Frequency.
