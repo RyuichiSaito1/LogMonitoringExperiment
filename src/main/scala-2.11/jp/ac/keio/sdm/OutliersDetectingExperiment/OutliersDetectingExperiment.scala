@@ -23,6 +23,7 @@ object OutliersDetectingExperiment {
   val SavingDirectoryForSampleData = "logs/error_sample"
   val KSize = 2
   val SeedSize = 1L
+  val UpperLimit = 10000
 
   def main(args: Array[String]) {
 
@@ -46,21 +47,21 @@ object OutliersDetectingExperiment {
     // Tokenization is the process of taking text (such as a sentence) and breaking it into individual terms (usually words).
     val tokenizer = new Tokenizer()
       .setInputCol("messages").setOutputCol("words")
-    val wordsData = tokenizer.transform(errorFileDF)
+    val wordsData = tokenizer.transform(analysingDF)
 
     // Compute Term Frequency.
     // Design NumFeatures.
     val hashingTF = new HashingTF()
       .setInputCol("words").setOutputCol("rawFeatures").setNumFeatures(1000)
     val featurizedData = hashingTF.transform(wordsData)
-    featurizedData.show()
+    featurizedData.show(UpperLimit)
 
-    // Compute TFD-IDF.
+    // Compute TF-IDF.
     val idf = new IDF()
       .setInputCol("rawFeatures").setOutputCol("features")
     val idfModel = idf.fit(featurizedData)
     val rescaledData = idfModel.transform(featurizedData)
-    rescaledData.show()
+    rescaledData.show(UpperLimit)
 
     // Design setK and setSeed
     val kmeans = new KMeans()
@@ -77,7 +78,7 @@ object OutliersDetectingExperiment {
     model.clusterCenters.foreach(println)
 
     val transformedData = model.transform(rescaledData)
-    transformedData.show()
+    transformedData.show(UpperLimit)
 
     val centroids = model.clusterCenters
     // Define threshold of anomalies detection.
@@ -96,7 +97,7 @@ object OutliersDetectingExperiment {
     }.select(originalCols.head, originalCols.tail:_*)
 
     val anomaly = anomalies.first()
-    val sentence = anomaly.getAs[String]("message")
+    val sentence = anomaly.getAs[String]("messages")
     println(sentence)
 
     deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
