@@ -37,10 +37,10 @@ object LogAggregateExperiment {
   val StackTrace13 = "stack_trace_13"
   val StackTrace14 = "stack_trace_14"
   val PartitionNum = 1
-  // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/logs/error"
-  val SavingDirectoryForErrorLog = "logs/error"
-  // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/logs/error_sample"
-  val SavingDirectoryForSampleData = "logs/error_sample"
+  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/logs/error"
+  // val SavingDirectoryForErrorLog = "logs/error"
+  val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/logs/error_sample"
+  // val SavingDirectoryForSampleData = "logs/error_sample"
 
   def main(args: Array[String]) {
 
@@ -56,7 +56,8 @@ object LogAggregateExperiment {
     }
 
     val Array(brokers, topics) = args
-    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    //val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     val spark = SparkSession
       .builder()

@@ -6,8 +6,8 @@ import org.apache.spark.SparkConf
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
 import org.apache.spark.ml.linalg.{Vector, Vectors}
-import org.apache.spark.sql.functions.regexp_replace
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.regexp_replace
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 /**
@@ -19,22 +19,24 @@ object OutliersDetectingExperiment {
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "OutliersDetectingExperiment"
   val BatchDuration = 15
-  // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/logs/error_sample"
+  val S3BacketName = "s3://aws-logs-757020086170-us-west-2"
+  //val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/logs/error_sample"
   val SavingDirectoryForSampleData = "logs/error_sample"
-  val KSize = 2
+  val KSize = 3
   val SeedSize = 1L
   val UpperLimit = 10000
 
   def main(args: Array[String]) {
 
     val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    //val sparkConf = new SparkConf().setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     val spark = SparkSession
       .builder()
       .appName(ApplicationName)
       .getOrCreate()
 
-    if (new File(SavingDirectoryForSampleData).exists == false){ return }
+    //if (new File(SavingDirectoryForSampleData).exists == false){ return }
     val errorFileDF = spark.read.parquet(SavingDirectoryForSampleData)
     val analysedMessageDF = errorFileDF.withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
     val analysedStackTrace01DF = analysedMessageDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), "\\.", " "))
@@ -64,6 +66,15 @@ object OutliersDetectingExperiment {
     val rescaledData = idfModel.transform(featurizedData)
     rescaledData.show(UpperLimit)
 
+    //dataPoint.show(UpperLimit)
+    //rescaledData.rdd.coalesce(1, true).saveAsTextFile("logs/error_sample2")
+
+    //rescaledData.select("features").rdd.map(_.getAs[SparseVector](0).values).take(2)
+    //rescaledData.select("features").rdd.map(_.getAs[SparseVector](0).toDense).saveAsTextFile("logs/error_sample2")
+    //val labeled = rescaledData.map(row => LabeledPoint(row.getDouble(0), row.getAs[SparseVector](3).toDense))
+    //labeled.rdd.coalesce(1, true).saveAsTextFile("logs/error_sample3")
+    //labeled.rdd.coalesce(1, true).saveAsTextFile("s3://aws-logs-757020086170-us-west-2/logs/error_sample2")
+
     // Design setK and setSeed
     val kmeans = new KMeans()
       .setK(KSize).setSeed(SeedSize)
@@ -88,7 +99,7 @@ object OutliersDetectingExperiment {
     val threshold = transformedData.
       select("prediction", "features").as[(Int, Vector)].
       map{ case (cluster, vec) => Vectors.sqdist(centroids(cluster), vec)}.
-      orderBy($"value".desc).take(100).last
+      orderBy($"value".desc).take(5).last
 
     val originalCols = rescaledData.columns
     val anomalies = transformedData.filter { row =>
@@ -98,10 +109,13 @@ object OutliersDetectingExperiment {
     }.select(originalCols.head, originalCols.tail:_*)
 
     val anomaly = anomalies.first()
+    anomalies.show(UpperLimit)
     val sentence = anomaly.getAs[String]("messages")
     println(sentence)
 
-    deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
+    //deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
+    val deleteS3Objcet = new DeleteS3Object
+    deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForSampleData))
 
     // $example off$
     spark.stop()

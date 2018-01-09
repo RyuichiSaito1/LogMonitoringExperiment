@@ -12,9 +12,8 @@ updateOptions := updateOptions.value.withCachedResolution(true)
 
 libraryDependencies ++= Seq(
   // Must set "provided" to compile normally.
-  // "org.apache.spark" %% "spark-streaming" % "2.0.1" % "provided",
+  "org.apache.spark" %% "spark-streaming" % "2.0.1" % "provided",
   // "org.apache.spark" %% "spark-streaming" % "2.0.1",
-  "org.apache.spark" %% "spark-streaming" % "2.0.1",
   "org.apache.spark" %% "spark-streaming-kafka-0-8" % "2.1.1",
   "org.apache.spark" %% "spark-sql" % "2.1.1",
   "org.apache.spark" %% "spark-sql-kafka-0-10" % "2.1.1",
@@ -27,7 +26,9 @@ libraryDependencies ++= Seq(
   "org.scala-tools.time" % "time_2.9.1" % "0.5",
   // scala-io
   "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.3-1",
-  "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3-1"
+  "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3-1",
+  // AWS API
+  "com.amazonaws" % "aws-java-sdk" % "1.11.259"
 )
 
 assemblyMergeStrategy in assembly := {
