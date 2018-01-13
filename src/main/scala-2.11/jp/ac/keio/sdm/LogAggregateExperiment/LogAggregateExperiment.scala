@@ -13,7 +13,7 @@ import org.joda.time.format.DateTimeFormat
   */
 object LogAggregateExperiment {
 
-  val ThreadCount = 2
+  val ThreadCount = "*"
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "LogAggregateExperiment"
   val BatchDuration = 2
@@ -37,10 +37,10 @@ object LogAggregateExperiment {
   val StackTrace13 = "stack_trace_13"
   val StackTrace14 = "stack_trace_14"
   val PartitionNum = 1
-  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/logs/error"
-  // val SavingDirectoryForErrorLog = "logs/error"
-  val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/logs/error_sample"
-  // val SavingDirectoryForSampleData = "logs/error_sample"
+  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/text"
+  // val SavingDirectoryForErrorLog = "data/text"
+  val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  // val SavingDirectoryForSampleData = "data/parquet"
 
   def main(args: Array[String]) {
 
@@ -56,7 +56,9 @@ object LogAggregateExperiment {
     }
 
     val Array(brokers, topics) = args
+    // Development Mode.
     //val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    // Product Mode.
     val sparkConf = new SparkConf().setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     val spark = SparkSession

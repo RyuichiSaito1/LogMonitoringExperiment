@@ -15,21 +15,25 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
   */
 object OutliersDetectingExperiment {
 
-  val ThreadCount = 2
+  val ThreadCount = "*"
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "OutliersDetectingExperiment"
   val BatchDuration = 15
   val S3BacketName = "s3://aws-logs-757020086170-us-west-2"
-  //val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/logs/error_sample"
-  val SavingDirectoryForSampleData = "logs/error_sample"
+  // Development Mode.
+  // val SavingDirectoryForSampleData = "data/parquet"
+  // Product Mode.
+  val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
   val KSize = 3
   val SeedSize = 1L
   val UpperLimit = 10000
 
   def main(args: Array[String]) {
 
-    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
-    //val sparkConf = new SparkConf().setAppName(ApplicationName)
+    // Development Mode.
+    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    // Product Mode.
+    val sparkConf = new SparkConf().setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     val spark = SparkSession
       .builder()
@@ -113,7 +117,9 @@ object OutliersDetectingExperiment {
     val sentence = anomaly.getAs[String]("messages")
     println(sentence)
 
+    // Development Mode.
     //deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
+    // Product Mode.
     val deleteS3Objcet = new DeleteS3Object
     deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForSampleData))
 
