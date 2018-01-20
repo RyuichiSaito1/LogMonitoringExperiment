@@ -18,7 +18,7 @@ object OutliersDetectingExperiment {
   val ThreadCount = "*"
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "OutliersDetectingExperiment"
-  val BatchDuration = 15
+  val BatchDuration = 300
   val S3BacketName = "s3://aws-logs-757020086170-us-west-2"
   // Development Mode.
   // val SavingDirectoryForSampleData = "data/parquet"
