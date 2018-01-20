@@ -3,7 +3,7 @@ package jp.ac.keio.sdm.OutliersDetectingExperiment
 import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.sns.AmazonSNSClient
-import com.amazonaws.services.sns.model.{CreateTopicRequest, SubscribeRequest}
+import com.amazonaws.services.sns.model.{CreateTopicRequest, PublishRequest, SubscribeRequest}
 
 class AmazonSNS {
 
@@ -24,5 +24,17 @@ class AmazonSNS {
   subRequest.setTopicArn(createTopicResult.toString)
   subRequest.setProtocol("sms")
   subRequest.setEndpoint("+818030956898")
-  //val subRequest = new SubscribeRequest(createTopicResult, "sms", "+818030956898");
+  snsClient.subscribe(subRequest)
+  //get request id for SubscribeRequest from SNS metadata//get request id for SubscribeRequest from SNS metadata
+  System.out.println("SubscribeRequest - " + snsClient.getCachedResponseMetadata(subRequest))
+  System.out.println("Check your email and confirm subscription.")
+
+  //publish to an SNS topic
+  val message = "My text published to SNS topic with email endpoint";
+  val publishRequest = new PublishRequest()
+  publishRequest.setTopicArn(createTopicResult.toString)
+  publishRequest.setMessage(message)
+  val publishResult = snsClient.publish(publishRequest)
+  //print MessageId of message published to SNS topic
+  System.out.println("MessageId - " + publishResult.getMessageId());
 }
