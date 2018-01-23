@@ -85,7 +85,6 @@ object OutliersDetectingExperiment {
     val model = kmeans.fit(rescaledData)
 
     // Evaluate clustering by computing Within Set Sum of Squared Errors.
-    // WSSSE?
     val WSSSE = model.computeCost(rescaledData)
     println(s"Within Set Sum of Squared Errors = $WSSSE")
 
@@ -102,14 +101,19 @@ object OutliersDetectingExperiment {
     import spark.implicits._
     val threshold = transformedData.
       select("prediction", "features").as[(Int, Vector)].
+      // Returns the squared distance between two Vectors.
       map{ case (cluster, vec) => Vectors.sqdist(centroids(cluster), vec)}.
       orderBy($"value".desc).take(5).last
 
+    // Returns all column names as an array.
     val originalCols = rescaledData.columns
+    originalCols.tail:_*
     val anomalies = transformedData.filter { row =>
       val cluster = row.getAs[Int]("prediction")
       val vec = row.getAs[Vector]("features")
       Vectors.sqdist(centroids(cluster), vec) >= threshold
+      // :_* means Pattern Sequence.
+      // tail method selects all elements except the first.
     }.select(originalCols.head, originalCols.tail:_*)
 
     val anomaly = anomalies.first()
