@@ -121,6 +121,9 @@ object OutliersDetectingExperiment {
     val sentence = anomaly.getAs[String]("messages")
     println(sentence)
 
+    val amazonSNS = new AmazonSNS();
+    amazonSNS.sendMessage("sms", "+8180XXXXXXXX", "Check your email and confirm subscription.")
+
     // Development Mode.
     //deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
     // Product Mode.
