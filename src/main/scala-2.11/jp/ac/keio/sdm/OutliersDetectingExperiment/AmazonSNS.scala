@@ -9,11 +9,12 @@ class AmazonSNS {
 
   // create a new SNS client and set endpoint
   val snsClient = new AmazonSNSClient(new ClasspathPropertiesFileCredentialsProvider)
-  snsClient.setRegion(Region.getRegion(Regions.US_EAST_1))
+  snsClient.setRegion(Region.getRegion(Regions.US_WEST_2))
 
-  //create a new SNS topic//create a new SNS topic
-  val createTopicRequest = new CreateTopicRequest("jp.ac.keio.sdm.AnomalyDetector")
-  val createTopicResult = snsClient.createTopic(createTopicRequest).toString
+  //create a new SNS topic
+  // val createTopicRequest = new CreateTopicRequest("jp.ac.keio.sdm.AnomalyDetector")
+  val createTopicRequest = new CreateTopicRequest("Londinium")
+  val createTopicResult = snsClient.createTopic(createTopicRequest).getTopicArn
   //print TopicArn
   System.out.println(createTopicResult);
   //get request id for CreateTopicRequest from SNS metadata
@@ -23,8 +24,8 @@ class AmazonSNS {
     //subscribe to an SNS topic
     val subRequest = new SubscribeRequest()
     subRequest.setTopicArn(createTopicResult)
-    subRequest.setProtocol("sms")
-    subRequest.setEndpoint("+818030956898")
+    subRequest.setProtocol(protocol)
+    subRequest.setEndpoint(endpoint)
     snsClient.subscribe(subRequest)
     //get request id for SubscribeRequest from SNS metadata//get request id for SubscribeRequest from SNS metadata
     System.out.println("SubscribeRequest - " + snsClient.getCachedResponseMetadata(subRequest))

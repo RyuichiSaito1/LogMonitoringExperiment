@@ -21,19 +21,20 @@ object OutliersDetectingExperiment {
   val BatchDuration = 300
   val S3BacketName = "s3://aws-logs-757020086170-us-west-2"
   // Development Mode.
-  // val SavingDirectoryForSampleData = "data/parquet"
+  val SavingDirectoryForSampleData = "data/parquet"
   // Product Mode.
-  val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
   val KSize = 3
   val SeedSize = 1L
   val UpperLimit = 10000
+  val MSN = "+8180XXXXXXXX"
 
   def main(args: Array[String]) {
 
     // Development Mode.
-    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // Product Mode.
-    val sparkConf = new SparkConf().setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     val spark = SparkSession
       .builder()
@@ -107,7 +108,6 @@ object OutliersDetectingExperiment {
 
     // Returns all column names as an array.
     val originalCols = rescaledData.columns
-    originalCols.tail:_*
     val anomalies = transformedData.filter { row =>
       val cluster = row.getAs[Int]("prediction")
       val vec = row.getAs[Vector]("features")
@@ -122,13 +122,13 @@ object OutliersDetectingExperiment {
     println(sentence)
 
     val amazonSNS = new AmazonSNS();
-    amazonSNS.sendMessage("sms", "+8180XXXXXXXX", "Check your email and confirm subscription.")
+    amazonSNS.sendMessage("sms", MSN, "Check your email and confirm subscription.")
 
     // Development Mode.
-    //deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
+    deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
     // Product Mode.
-    val deleteS3Objcet = new DeleteS3Object
-    deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForSampleData))
+    // val deleteS3Objcet = new DeleteS3Object
+    // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForSampleData))
 
     // $example off$
     spark.stop()

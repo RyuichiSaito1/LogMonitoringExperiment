@@ -5,9 +5,12 @@ package jp.ac.keio.sdm.OutliersDetectingExperiment
 
 import java.util
 
-import com.amazonaws.AmazonServiceException
+import com.amazonaws.{AmazonServiceException, ClientConfiguration, Protocol}
+import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.DeleteObjectsRequest
+
 /**
   * Delete multiple objects from an Amazon S3 bucket.
   *
@@ -17,6 +20,10 @@ import com.amazonaws.services.s3.model.DeleteObjectsRequest
   * ++ Warning ++ This code will actually delete the objects that you specify!
   */
 class DeleteS3Object {
+
+  val TimeOutMilliSecond = 10000
+  val URL = "https://s3.console.aws.amazon.com"
+  val Region = "us-west-2"
 
   def deleteS3Objcet(args: Array[String]) {
 
@@ -33,7 +40,17 @@ class DeleteS3Object {
       System.out.println(" * " + k)
     }
 
-    val s3 = AmazonS3ClientBuilder.defaultClient
+    val clientConfig = new ClientConfiguration()
+    clientConfig.setProtocol(Protocol.HTTPS)
+    clientConfig.setConnectionTimeout(TimeOutMilliSecond)
+
+    val endpointConfiguration = new EndpointConfiguration(URL, Region)
+
+    val s3 = AmazonS3ClientBuilder.standard()
+      .withCredentials(new ClasspathPropertiesFileCredentialsProvider)
+      .withClientConfiguration(clientConfig)
+      .withEndpointConfiguration(endpointConfiguration).build()
+
     try {
       val dor = new DeleteObjectsRequest(bucket_name).withKeys(object_keys)
       s3.deleteObjects(dor)
