@@ -21,7 +21,7 @@ import com.amazonaws.services.s3.model.DeleteObjectsRequest
   */
 class DeleteS3Object {
 
-  val TimeOutMilliSecond = 10000
+  val TimeOutMilliSeconds = 10000
   val URL = "https://s3.console.aws.amazon.com"
   val Region = "us-west-2"
 
@@ -42,7 +42,7 @@ class DeleteS3Object {
 
     val clientConfig = new ClientConfiguration()
     clientConfig.setProtocol(Protocol.HTTPS)
-    clientConfig.setConnectionTimeout(TimeOutMilliSecond)
+    clientConfig.setConnectionTimeout(TimeOutMilliSeconds)
 
     val endpointConfiguration = new EndpointConfiguration(URL, Region)
 

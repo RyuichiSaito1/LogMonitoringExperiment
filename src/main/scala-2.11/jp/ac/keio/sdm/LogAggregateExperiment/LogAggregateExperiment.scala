@@ -37,10 +37,14 @@ object LogAggregateExperiment {
   val StackTrace13 = "stack_trace_13"
   val StackTrace14 = "stack_trace_14"
   val PartitionNum = 1
-  // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/text"
+  // Development Mode.
   val SavingDirectoryForErrorLog = "data/text"
-  // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  // Product Mode.
+  // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/text"
+  // Development Mode.
   val SavingDirectoryForSampleData = "data/parquet"
+  // Product Mode.
+  // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
 
   def main(args: Array[String]) {
 
