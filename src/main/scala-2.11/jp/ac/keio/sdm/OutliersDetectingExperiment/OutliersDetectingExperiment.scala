@@ -1,3 +1,4 @@
+/* Copyright (c) 2017 Ryuichi Saito, Keio University. All right reserved. */
 package jp.ac.keio.sdm.OutliersDetectingExperiment
 
 import java.io.File
