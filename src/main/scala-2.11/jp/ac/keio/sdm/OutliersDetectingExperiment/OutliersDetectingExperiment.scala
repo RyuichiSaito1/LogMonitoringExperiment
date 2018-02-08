@@ -25,8 +25,11 @@ object OutliersDetectingExperiment {
   val SavingDirectoryForSampleData = "data/parquet"
   // Product Mode.
   // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  // Result that word's hashcode divided NumFeatures is mapped NumFeatures size.
+  val NumFeatureSize = 10000
   val KSize = 3
-  val SeedSize = 1L
+  // Execution frequency for choosing initial cluster centroid positions( or seeds).
+  val SeedSize = 10L
   val UpperLimit = 10000
   val MSN = "+8180XXXXXXXX"
 
@@ -59,9 +62,8 @@ object OutliersDetectingExperiment {
     val wordsData = tokenizer.transform(analysingDF)
 
     // Compute Term Frequency.
-    // Design NumFeatures.
     val hashingTF = new HashingTF()
-      .setInputCol("words").setOutputCol("rawFeatures").setNumFeatures(1000)
+      .setInputCol("words").setOutputCol("rawFeatures").setNumFeatures(NumFeatureSize)
     val featurizedData = hashingTF.transform(wordsData)
     featurizedData.show(UpperLimit)
 
@@ -101,6 +103,7 @@ object OutliersDetectingExperiment {
     // Define threshold of anomalies detection.
     // Need org.apache.spark.ml.linalg.Vector
     import spark.implicits._
+    // The squared distance double.
     val threshold = transformedData.
       select("prediction", "features").as[(Int, Vector)].
       // Returns the squared distance between two Vectors.
@@ -117,8 +120,8 @@ object OutliersDetectingExperiment {
       // tail method selects all elements except the first.
     }.select(originalCols.head, originalCols.tail:_*)
 
-    val anomaly = anomalies.first()
     anomalies.show(UpperLimit)
+    val anomaly = anomalies.first()
     val sentence = anomaly.getAs[String]("messages")
     println(sentence)
 
