@@ -3,7 +3,7 @@
 /*
 Reference to https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/DeleteObjects.java
  */
-package jp.ac.keio.sdm.OutliersDetectingExperiment
+package jp.ac.keio.sdm.AnomalyDetectingExperiment
 
 import java.util
 
