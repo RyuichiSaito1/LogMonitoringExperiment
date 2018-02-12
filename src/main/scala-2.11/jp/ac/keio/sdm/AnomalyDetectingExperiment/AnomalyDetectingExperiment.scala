@@ -129,11 +129,11 @@ object AnomalyDetectingExperiment {
     }
     import org.apache.spark.sql.functions._
     val CalculateSquaredDistance = udf(squaredDistance)
-    val df = transformedData.withColumn("square_distance", CalculateSquaredDistance(col("prediction"), col("features"))).distinct()
-    df.show(UpperLimit)
-    val predeictionData = df.groupBy("prediction").agg(min("square_distance"))
+    val squredDistanceData = transformedData.withColumn("square_distance", CalculateSquaredDistance(col("prediction"), col("features"))).distinct()
+    squredDistanceData.show(UpperLimit)
+    val predeictionData = squredDistanceData.groupBy("prediction").agg(min("square_distance"))
     val renamedPredictionData = predeictionData.withColumnRenamed("min(square_distance)", "square_distance")
-    val finalData = df.join(renamedPredictionData, Seq("prediction","square_distance"))
+    val finalData = squredDistanceData.join(renamedPredictionData, Seq("prediction","square_distance"))
     finalData.show(UpperLimit)
 
     val anomaly = anomalies.first()
