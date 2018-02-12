@@ -135,13 +135,15 @@ object AnomalyDetectingExperiment {
     val renamedPredictionData = predeictionData.withColumnRenamed("min(square_distance)", "square_distance")
     val finalData = squredDistanceData.join(renamedPredictionData, Seq("prediction","square_distance"))
     finalData.show(UpperLimit)
+    val messages = finalData.select("messages").collectAsList().toString
+    println(messages)
 
     val anomaly = anomalies.first()
     val sentence = anomaly.getAs[String]("messages")
     println(sentence)
 
     val amazonSNS = new AmazonSNS();
-    amazonSNS.sendMessage("sms", MSN, "Check your email and confirm subscription.")
+    amazonSNS.sendMessage("sms", MSN, messages)
 
     // Development Mode.
     deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
