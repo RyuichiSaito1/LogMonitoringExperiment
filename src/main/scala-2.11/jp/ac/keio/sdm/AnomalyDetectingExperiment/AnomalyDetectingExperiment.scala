@@ -137,6 +137,7 @@ object AnomalyDetectingExperiment {
     val finalData = squredDistanceData.join(renamedPredictionData, Seq("prediction","square_distance"))
     finalData.show(UpperLimit)
     val messages = finalData.select("messages").collectAsList().toString
+    val finalMessages = "Hello I'm a Anomalies Detector, We are sending you three representative messages.\\nPlease check following messages.\\n" + messages.replace("[","Message[")
     println(messages)
 
     val anomaly = anomalies.first()
@@ -147,7 +148,7 @@ object AnomalyDetectingExperiment {
     amazonSNS.sendMessage("sms", MSN, messages)
 
     // Development Mode.
-    deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
+    // deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
     // Product Mode.
     // val deleteS3Objcet = new DeleteS3Object
     // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForSampleData))
