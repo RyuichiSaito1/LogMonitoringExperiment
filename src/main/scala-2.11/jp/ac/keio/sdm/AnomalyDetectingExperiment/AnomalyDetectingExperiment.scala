@@ -48,7 +48,7 @@ object AnomalyDetectingExperiment {
     val analysedStackTrace01DF = analysedMessageDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), "\\.", " "))
     val analysedDF = analysedStackTrace01DF.withColumn("analysedStackTrace02", regexp_replace(errorFileDF("stack_trace_02"), "\\.", " "))
     analysedDF.createOrReplaceTempView("errorFile")
-    val analysingDF = spark.sql("SELECT CONCAT(message, ' ', stack_trace_01, ' ', stack_trace_02) AS messages" +
+    val analysingDF = spark.sql("SELECT CONCAT(date_time, ' ', log_level, ' ', multi_thread_id, ' ', message, ' ', stack_trace_01, ' ', stack_trace_02) AS messages" +
       ", CONCAT(analysedMessage, ' ', analysedStackTrace01, ' ', analysedStackTrace02) AS analysedMessages FROM errorFile")
     analysingDF.show()
     // import spark.implicits._
@@ -137,7 +137,7 @@ object AnomalyDetectingExperiment {
     val finalData = squredDistanceData.join(renamedPredictionData, Seq("prediction","square_distance"))
     finalData.show(UpperLimit)
     val messages = finalData.select("messages").collectAsList().toString
-    val finalMessages = "Hello I'm a Anomalies Detector, We are sending you three representative messages.\\nPlease check following messages.\\n" + messages.replace("[","Message[")
+    val finalMessages = "Hello, I'm a Anomalies Detector, We are sending you three representative messages.\\nPlease check following messages and stack traces.\\n" + messages.replace("[","Message[")
     println(messages)
 
     val anomaly = anomalies.first()
