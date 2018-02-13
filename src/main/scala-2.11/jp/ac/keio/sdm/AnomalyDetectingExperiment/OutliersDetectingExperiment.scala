@@ -129,7 +129,7 @@ object OutliersDetectingExperiment {
     amazonSNS.sendMessage("sms", MSN, "Check your email and confirm subscription.")
 
     // Development Mode.
-    deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
+    // deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
     // Product Mode.
     // val deleteS3Objcet = new DeleteS3Object
     // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForSampleData))

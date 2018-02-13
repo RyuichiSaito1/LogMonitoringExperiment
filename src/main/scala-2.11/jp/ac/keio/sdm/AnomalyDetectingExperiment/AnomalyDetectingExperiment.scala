@@ -48,14 +48,15 @@ object AnomalyDetectingExperiment {
     val analysedStackTrace01DF = analysedMessageDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), "\\.", " "))
     val analysedDF = analysedStackTrace01DF.withColumn("analysedStackTrace02", regexp_replace(errorFileDF("stack_trace_02"), "\\.", " "))
     analysedDF.createOrReplaceTempView("errorFile")
-    val analysingDF = spark.sql("SELECT CONCAT(analysedMessage, ' ', analysedStackTrace01, ' ', analysedStackTrace02) AS messages FROM errorFile")
+    val analysingDF = spark.sql("SELECT CONCAT(message, ' ', stack_trace_01, ' ', stack_trace_02) AS messages" +
+      ", CONCAT(analysedMessage, ' ', analysedStackTrace01, ' ', analysedStackTrace02) AS analysedMessages FROM errorFile")
     analysingDF.show()
     // import spark.implicits._
     // analysingDF.map(attributes => "messages: " + attributes(0)).show()
 
     // Tokenization is the process of taking text (such as a sentence) and breaking it into individual terms (usually words).
     val tokenizer = new Tokenizer()
-      .setInputCol("messages").setOutputCol("words")
+      .setInputCol("analysedMessages").setOutputCol("words")
     val wordsData = tokenizer.transform(analysingDF)
 
     // Compute Term Frequency.
