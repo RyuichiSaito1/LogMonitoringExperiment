@@ -101,12 +101,12 @@ object AnomalyDetectingExperiment {
     // Define threshold of anomalies detection.
     // Need org.apache.spark.ml.linalg.Vector
     import spark.implicits._
-    // The squared distance double.
+    /*// The squared distance double.
     val threshold = transformedData.
       select("prediction", "features").as[(Int, Vector)].
       // Returns the squared distance between two Vectors.
       map{ case (cluster, vec) => Vectors.sqdist(centroids(cluster), vec)}.
-      orderBy($"value".desc).take(5).last
+      orderBy($"value".desc).take(5).last*/
 
     val reprentative = transformedData.
       select("prediction", "features").as[(Int, Vector)].
@@ -114,7 +114,7 @@ object AnomalyDetectingExperiment {
       orderBy($"value".asc)
     reprentative.show(UpperLimit)
 
-    // Returns all column names as an array.
+    /*// Returns all column names as an array.
     val originalCols = rescaledData.columns
     val anomalies = transformedData.filter { row =>
       val cluster = row.getAs[Int]("prediction")
@@ -123,7 +123,7 @@ object AnomalyDetectingExperiment {
       // :_* means Pattern Sequence.
       // tail method selects all elements except the first.
     }.select(originalCols.head, originalCols.tail:_*)
-    anomalies.show(UpperLimit)
+    anomalies.show(UpperLimit)*/
 
     val squaredDistance = (cluster: Int, datapoint: Vector) => {
       Vectors.sqdist(centroids(cluster), datapoint)
@@ -137,12 +137,12 @@ object AnomalyDetectingExperiment {
     val finalData = squredDistanceData.join(renamedPredictionData, Seq("prediction","square_distance"))
     finalData.show(UpperLimit)
     val messages = finalData.select("messages").collectAsList().toString
-    val finalMessages = "Hello, I'm a Anomalies Detector, We are sending you three representative messages.\nPlease check following messages and stack traces.\n" + messages.replace("[","Message[")
+    val finalMessages = "Hello, I'm a Anomalies Detector, We are sending you three representative messages.\nPlease check following messages and stack traces.\n" + messages.replace("[","\nMessage[")
     println(finalMessages)
 
-    val anomaly = anomalies.first()
+    /*val anomaly = anomalies.first()
     val sentence = anomaly.getAs[String]("messages")
-    println(sentence)
+    println(sentence)*/
 
     val amazonSNS = new AmazonSNS();
     amazonSNS.sendMessage("sms", MSN, finalMessages)
