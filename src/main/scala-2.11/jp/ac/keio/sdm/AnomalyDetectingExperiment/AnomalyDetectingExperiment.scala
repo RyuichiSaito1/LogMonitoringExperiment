@@ -28,7 +28,7 @@ object AnomalyDetectingExperiment {
   // Execution frequency for choosing initial cluster centroid positions( or seeds).
   val SeedSize = 10L
   val UpperLimit = 10000
-  val MSN = "+81XXXXXXXX"
+  val MSN = "+8180XXXXXXXX"
 
   def main(args: Array[String]) {
 
@@ -137,7 +137,7 @@ object AnomalyDetectingExperiment {
     val finalData = squredDistanceData.join(renamedPredictionData, Seq("prediction","square_distance"))
     finalData.show(UpperLimit)
     val messages = finalData.select("messages").collectAsList().toString
-    val finalMessages = "Hello, I'm a Anomalies Detector, We are sending you three representative messages.\nPlease check following messages and stack traces.\n" + messages.replace("[","\nMessage[")
+    val finalMessages = "Hello, I'm a Anomalies Detector, We are sending you three representative messages.\nPlease check following messages and stack traces.\n\n" + messages.replace(",","\n\nMessage").replace("[[","[Message[")
     println(finalMessages)
 
     /*val anomaly = anomalies.first()
