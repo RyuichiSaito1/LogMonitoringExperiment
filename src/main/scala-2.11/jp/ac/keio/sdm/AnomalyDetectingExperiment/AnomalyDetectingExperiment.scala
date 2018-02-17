@@ -28,7 +28,7 @@ object AnomalyDetectingExperiment {
   val SeedSize = 10L
   val UpperLimit = 10000
   val PartitionNum = 1
-  val MSN = "+818030956898"
+  val MSN = "+8180XXXXXXXX"
 
   def main(args: Array[String]) {
 
