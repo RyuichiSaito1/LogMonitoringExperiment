@@ -3,13 +3,12 @@ package jp.ac.keio.sdm.AnomalyDetectingExperiment
 
 import java.io.File
 
-import org.apache.spark.SparkConf
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.regexp_replace
-import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.{SparkConf, SparkContext}
 
 object AnomalyDetectingExperiment {
 
@@ -28,7 +27,8 @@ object AnomalyDetectingExperiment {
   // Execution frequency for choosing initial cluster centroid positions( or seeds).
   val SeedSize = 10L
   val UpperLimit = 10000
-  val MSN = "+8180XXXXXXXX"
+  val PartitionNum = 1
+  val MSN = "+818030956898"
 
   def main(args: Array[String]) {
 
@@ -36,12 +36,12 @@ object AnomalyDetectingExperiment {
     val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // Product Mode.
     // val sparkConf = new SparkConf().setAppName(ApplicationName)
-    val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
+    val sc = new SparkContext(sparkConf)
+
     val spark = SparkSession
       .builder()
       .appName(ApplicationName)
       .getOrCreate()
-
     //if (new File(SavingDirectoryForSampleData).exists == false){ return }
     val errorFileDF = spark.read.parquet(SavingDirectoryForSampleData)
     val analysedMessageDF = errorFileDF.withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
@@ -153,8 +153,7 @@ object AnomalyDetectingExperiment {
     // val deleteS3Objcet = new DeleteS3Object
     // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForSampleData))
 
-    // $example off$
-    spark.stop()
+    sc.stop()
   }
 
   def deleteDirectoryRecursively(file: File) {
