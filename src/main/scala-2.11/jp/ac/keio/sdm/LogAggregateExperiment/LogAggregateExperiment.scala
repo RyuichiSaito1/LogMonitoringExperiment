@@ -36,16 +36,15 @@ object LogAggregateExperiment {
   val StackTrace11 = "stack_trace_11"
   val StackTrace12 = "stack_trace_12"
   val StackTrace13 = "stack_trace_13"
-  val StackTrace14 = "stack_trace_14"
   val PartitionNum = 1
   // Development Mode.
-  val SavingDirectoryForErrorLog = "data/text"
+  // val SavingDirectoryForErrorLog = "data/text"
   // Product Mode.
-  // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/text"
+  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/text"
   // Development Mode.
-  val SavingDirectoryForSampleData = "data/parquet"
+  // val SavingDirectoryForSampleData = "data/parquet"
   // Product Mode.
-  // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
 
   def main(args: Array[String]) {
 
@@ -99,8 +98,7 @@ object LogAggregateExperiment {
            ,StackTrace10
            ,StackTrace11
            ,StackTrace12
-           ,StackTrace13
-           ,StackTrace14).agg(min(Message).alias(Message))
+           ,StackTrace13).agg(min(Message).alias(Message))
 
          val dateTime = new DateTime()
          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
@@ -122,8 +120,7 @@ object LogAggregateExperiment {
               ,StackTrace10
               ,StackTrace11
               ,StackTrace12
-              ,StackTrace13
-              ,StackTrace14)
+              ,StackTrace13)
          printingResultSetByGroupBy.show(UpperLimit)
          // org.apache.spark.rdd#coalesce : Return a new RDD that is reduced into numPartitions partitions.
          printingResultSetByGroupBy.rdd.coalesce(PartitionNum, true).saveAsTextFile(SavingDirectoryForErrorLog)
