@@ -17,9 +17,9 @@ object AnomalyDetectingExperiment {
   val ApplicationName = "OutliersDetectingExperiment"
   val S3BacketName = "s3://aws-logs-757020086170-us-west-2"
   // Development Mode.
-  val SavingDirectoryForSampleData = "data/parquet"
+  // val SavingDirectoryForSampleData = "data/parquet"
   // Product Mode.
-  // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
   // Result that word's hashcode divided NumFeatures is mapped NumFeatures size.
   val NumFeatureSize = 10000
   val KSize = 3
@@ -27,16 +27,16 @@ object AnomalyDetectingExperiment {
   val SeedSize = 10L
   val UpperLimit = 10000
   val PartitionNum = 1
-  val MSN = "+818030956898"
+  val MSN = "+8180XXXXXXXX"
 
   val SavingDirectoryForFinalData = "data/text/final"
 
   def main(args: Array[String]) {
 
     // Development Mode.
-    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // Product Mode.
-    // val sparkConf = new SparkConf().setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setAppName(ApplicationName)
     val sc = new SparkContext(sparkConf)
 
     val spark = SparkSession
