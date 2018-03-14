@@ -61,9 +61,9 @@ object LogAggregateExperiment {
 
     val Array(brokers, topics) = args
     // Development Mode.
-    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // Product Mode.
-    // val sparkConf = new SparkConf().setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     val spark = SparkSession
       .builder()

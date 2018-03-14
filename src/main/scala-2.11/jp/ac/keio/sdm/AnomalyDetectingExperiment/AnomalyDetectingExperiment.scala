@@ -15,7 +15,6 @@ object AnomalyDetectingExperiment {
   val ThreadCount = "*"
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "OutliersDetectingExperiment"
-  val BatchDuration = 300
   val S3BacketName = "s3://aws-logs-757020086170-us-west-2"
   // Development Mode.
   val SavingDirectoryForSampleData = "data/parquet"
@@ -28,7 +27,9 @@ object AnomalyDetectingExperiment {
   val SeedSize = 10L
   val UpperLimit = 10000
   val PartitionNum = 1
-  val MSN = "+8180XXXXXXXX"
+  val MSN = "+818030956898"
+
+  val SavingDirectoryForFinalData = "data/text/final"
 
   def main(args: Array[String]) {
 
@@ -44,6 +45,7 @@ object AnomalyDetectingExperiment {
       .getOrCreate()
     //if (new File(SavingDirectoryForSampleData).exists == false){ return }
     val errorFileDF = spark.read.parquet(SavingDirectoryForSampleData)
+
     val analysedMessageDF = errorFileDF.withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
     val analysedStackTrace01DF = analysedMessageDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), "\\.", " "))
     val analysedDF = analysedStackTrace01DF.withColumn("analysedStackTrace02", regexp_replace(errorFileDF("stack_trace_02"), "\\.", " "))
@@ -72,15 +74,6 @@ object AnomalyDetectingExperiment {
     val rescaledData = idfModel.transform(featurizedData)
     rescaledData.show(UpperLimit)
 
-    //dataPoint.show(UpperLimit)
-    //rescaledData.rdd.coalesce(1, true).saveAsTextFile("logs/error_sample2")
-
-    //rescaledData.select("features").rdd.map(_.getAs[SparseVector](0).values).take(2)
-    //rescaledData.select("features").rdd.map(_.getAs[SparseVector](0).toDense).saveAsTextFile("logs/error_sample2")
-    //val labeled = rescaledData.map(row => LabeledPoint(row.getDouble(0), row.getAs[SparseVector](3).toDense))
-    //labeled.rdd.coalesce(1, true).saveAsTextFile("logs/error_sample3")
-    //labeled.rdd.coalesce(1, true).saveAsTextFile("s3://aws-logs-757020086170-us-west-2/logs/error_sample2")
-
     // Design setK and setSeed
     val kmeans = new KMeans()
       .setK(KSize).setSeed(SeedSize)
@@ -98,32 +91,12 @@ object AnomalyDetectingExperiment {
     transformedData.show(UpperLimit)
 
     val centroids = model.clusterCenters
-    // Define threshold of anomalies detection.
-    // Need org.apache.spark.ml.linalg.Vector
     import spark.implicits._
-    /*// The squared distance double.
-    val threshold = transformedData.
-      select("prediction", "features").as[(Int, Vector)].
-      // Returns the squared distance between two Vectors.
-      map{ case (cluster, vec) => Vectors.sqdist(centroids(cluster), vec)}.
-      orderBy($"value".desc).take(5).last*/
-
     val reprentative = transformedData.
       select("prediction", "features").as[(Int, Vector)].
       map{ case (cluster, vec) => Vectors.sqdist(centroids(cluster), vec)}.
       orderBy($"value".asc)
     reprentative.show(UpperLimit)
-
-    /*// Returns all column names as an array.
-    val originalCols = rescaledData.columns
-    val anomalies = transformedData.filter { row =>
-      val cluster = row.getAs[Int]("prediction")
-      val vec = row.getAs[Vector]("features")
-      Vectors.sqdist(centroids(cluster), vec) >= threshold
-      // :_* means Pattern Sequence.
-      // tail method selects all elements except the first.
-    }.select(originalCols.head, originalCols.tail:_*)
-    anomalies.show(UpperLimit)*/
 
     val squaredDistance = (cluster: Int, datapoint: Vector) => {
       Vectors.sqdist(centroids(cluster), datapoint)
@@ -140,10 +113,6 @@ object AnomalyDetectingExperiment {
     val finalMessages = "Hello, I'm a Anomalies Detector, We are sending you three representative messages.\nPlease check following messages and stack traces.\n\n" + messages.replace(",","\n\nMessage").replace("[[","[Message[")
     println(finalMessages)
 
-    /*val anomaly = anomalies.first()
-    val sentence = anomaly.getAs[String]("messages")
-    println(sentence)*/
-
     val amazonSNS = new AmazonSNS();
     amazonSNS.sendMessage("sms", MSN, finalMessages)
 
@@ -152,7 +121,6 @@ object AnomalyDetectingExperiment {
     // Product Mode.
     // val deleteS3Objcet = new DeleteS3Object
     // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForSampleData))
-
     sc.stop()
   }
 
