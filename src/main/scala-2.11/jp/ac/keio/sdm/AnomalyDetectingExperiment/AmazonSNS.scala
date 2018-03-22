@@ -17,6 +17,7 @@ class AmazonSNS {
   val secretKey = properties.getProperty("secretKey")
 
   // create a new SNS client and set endpoint
+  // Could not execute ClasspathPropertiesFileCredentialsProvider at Amazon EMR.
   // val snsClient = new AmazonSNSClient(new ClasspathPropertiesFileCredentialsProvider)
   val snsClient = new AmazonSNSClient(new BasicAWSCredentials(accessKey, secretKey))
   snsClient.setRegion(Region.getRegion(Regions.US_EAST_2))
