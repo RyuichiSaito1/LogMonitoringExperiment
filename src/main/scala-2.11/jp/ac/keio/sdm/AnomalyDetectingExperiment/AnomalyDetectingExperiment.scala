@@ -2,6 +2,7 @@
 package jp.ac.keio.sdm.AnomalyDetectingExperiment
 
 import java.io.File
+import java.util.Properties
 
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
@@ -17,9 +18,9 @@ object AnomalyDetectingExperiment {
   val ApplicationName = "OutliersDetectingExperiment"
   val S3BacketName = "s3://aws-logs-757020086170-us-west-2"
   // Development Mode.
-  // val SavingDirectoryForSampleData = "data/parquet"
+  val SavingDirectoryForSampleData = "data/parquet"
   // Product Mode.
-  val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
   // Result that word's hashcode divided NumFeatures is mapped NumFeatures size.
   val NumFeatureSize = 10000
   val KSize = 3
@@ -27,24 +28,31 @@ object AnomalyDetectingExperiment {
   val SeedSize = 10L
   val UpperLimit = 10000
   val PartitionNum = 1
-  val MSN = "+8180XXXXXXXX"
 
   val SavingDirectoryForFinalData = "data/text/final"
 
   def main(args: Array[String]) {
 
+    val properties = new Properties()
+    properties.load(getClass.getResourceAsStream("/AwsEndpoints.properties"))
+    val MSN = properties.getProperty("MSN")
+    val EMail = properties.getProperty("EMail")
+
     // Development Mode.
-    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    // val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     // Product Mode.
-    val sparkConf = new SparkConf().setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setAppName(ApplicationName)
     val sc = new SparkContext(sparkConf)
 
     val spark = SparkSession
       .builder()
       .appName(ApplicationName)
       .getOrCreate()
-    //if (new File(SavingDirectoryForSampleData).exists == false){ return }
+    // if (new File(SavingDirectoryForSampleData).exists == false){ return }
     val errorFileDF = spark.read.parquet(SavingDirectoryForSampleData)
+    // val schema = spark.read.parquet(SavingDirectoryForSampleData).schema
+    // val errorFileDF = spark.readStream.schema(schema).parquet(SavingDirectoryForSampleData)
 
     val analysedMessageDF = errorFileDF.withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
     val analysedStackTrace01DF = analysedMessageDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), "\\.", " "))
@@ -91,13 +99,6 @@ object AnomalyDetectingExperiment {
     transformedData.show(UpperLimit)
 
     val centroids = model.clusterCenters
-    import spark.implicits._
-    val reprentative = transformedData.
-      select("prediction", "features").as[(Int, Vector)].
-      map{ case (cluster, vec) => Vectors.sqdist(centroids(cluster), vec)}.
-      orderBy($"value".asc)
-    reprentative.show(UpperLimit)
-
     val squaredDistance = (cluster: Int, datapoint: Vector) => {
       Vectors.sqdist(centroids(cluster), datapoint)
     }
@@ -106,6 +107,7 @@ object AnomalyDetectingExperiment {
     val squredDistanceData = transformedData.withColumn("square_distance", CalculateSquaredDistance(col("prediction"), col("features"))).distinct()
     squredDistanceData.show(UpperLimit)
     val predeictionData = squredDistanceData.groupBy("prediction").agg(min("square_distance"))
+    predeictionData.show(UpperLimit)
     val renamedPredictionData = predeictionData.withColumnRenamed("min(square_distance)", "square_distance")
     val finalData = squredDistanceData.join(renamedPredictionData, Seq("prediction","square_distance"))
     finalData.show(UpperLimit)
@@ -114,7 +116,8 @@ object AnomalyDetectingExperiment {
     println(finalMessages)
 
     val amazonSNS = new AmazonSNS();
-    amazonSNS.sendMessage("sms", MSN, finalMessages)
+    // amazonSNS.sendMessage("sms", MSN, finalMessages)
+    amazonSNS.sendMessage("email", EMail, finalMessages)
 
     // Development Mode.
     // deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))

@@ -1,16 +1,25 @@
 /* Copyright (c) 2017 Ryuichi Saito, Keio University. All right reserved. */
 package jp.ac.keio.sdm.AnomalyDetectingExperiment
 
-import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider
+import java.util.Properties
+
+import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.sns.AmazonSNSClient
 import com.amazonaws.services.sns.model.{CreateTopicRequest, PublishRequest, SubscribeRequest}
 
 class AmazonSNS {
 
+
+  val properties = new Properties()
+  properties.load(getClass.getResourceAsStream("/AwsCredentials.properties"))
+  val accessKey = properties.getProperty("accessKey")
+  val secretKey = properties.getProperty("secretKey")
+
   // create a new SNS client and set endpoint
-  val snsClient = new AmazonSNSClient(new ClasspathPropertiesFileCredentialsProvider)
-  snsClient.setRegion(Region.getRegion(Regions.US_WEST_2))
+  // val snsClient = new AmazonSNSClient(new ClasspathPropertiesFileCredentialsProvider)
+  val snsClient = new AmazonSNSClient(new BasicAWSCredentials(accessKey, secretKey))
+  snsClient.setRegion(Region.getRegion(Regions.US_EAST_2))
 
   //create a new SNS topic
   // val createTopicRequest = new CreateTopicRequest("jp.ac.keio.sdm.AnomalyDetector")
