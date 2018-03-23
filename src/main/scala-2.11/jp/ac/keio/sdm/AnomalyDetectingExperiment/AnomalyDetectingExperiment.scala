@@ -111,7 +111,14 @@ object AnomalyDetectingExperiment {
     val renamedPredictionData = predeictionData.withColumnRenamed("min(square_distance)", "square_distance")
     val finalData = squredDistanceData.join(renamedPredictionData, Seq("prediction","square_distance"))
     finalData.show(UpperLimit)
-    val messages = finalData.select("messages").collectAsList().toString
+    //val messages = finalData.select("messages").collectAsList().toString
+    var messages = ""
+    for (i <- 0 to KSize - 1) {
+      if (finalData.groupBy("prediction").count().filter(finalData("prediction") === i) == 0) return
+      val temporaryData = finalData.filter(finalData("prediction") === i).select("messages").first().toString()
+      messages = messages.concat(temporaryData)
+    }
+    System.out.println("String =" + messages)
     val finalMessages = "Hello, I'm a Anomalies Detector, We are sending you three representative messages.\nPlease check following messages and stack traces.\n\n" + messages.replace(",","\n\nMessage").replace("[[","[Message[")
     println(finalMessages)
 

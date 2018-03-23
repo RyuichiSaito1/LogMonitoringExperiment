@@ -10,7 +10,6 @@ import com.amazonaws.services.sns.model.{CreateTopicRequest, PublishRequest, Sub
 
 class AmazonSNS {
 
-
   val properties = new Properties()
   properties.load(getClass.getResourceAsStream("/AwsCredentials.properties"))
   val accessKey = properties.getProperty("accessKey")
