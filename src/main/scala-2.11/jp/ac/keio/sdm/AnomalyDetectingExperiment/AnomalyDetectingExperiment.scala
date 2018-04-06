@@ -98,6 +98,7 @@ object AnomalyDetectingExperiment {
     val transformedData = model.transform(rescaledData)
     transformedData.show(UpperLimit)
 
+    // Calculate Squared Distance.
     val centroids = model.clusterCenters
     val squaredDistance = (cluster: Int, datapoint: Vector) => {
       Vectors.sqdist(centroids(cluster), datapoint)
@@ -106,6 +107,7 @@ object AnomalyDetectingExperiment {
     val CalculateSquaredDistance = udf(squaredDistance)
     val squredDistanceData = transformedData.withColumn("square_distance", CalculateSquaredDistance(col("prediction"), col("features"))).distinct()
     squredDistanceData.show(UpperLimit)
+    
     val predeictionData = squredDistanceData.groupBy("prediction").agg(min("square_distance"))
     predeictionData.show(UpperLimit)
     val renamedPredictionData = predeictionData.withColumnRenamed("min(square_distance)", "square_distance")
