@@ -61,9 +61,9 @@ object LogAggregateExperiment {
 
     val Array(brokers, topics) = args
     // Development Mode.
-    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // Product Mode.
-    val sparkConf = new SparkConf().setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     val spark = SparkSession
       .builder()
@@ -79,13 +79,14 @@ object LogAggregateExperiment {
     val lines = messages.map(_._2)
 
     // https://spark.apache.org/docs/latest/streaming-programming-guide.html#design-patterns-for-using-foreachrdd
-     lines.foreachRDD(jsonRDD => {
+       lines.foreachRDD(jsonRDD => {
        val data = spark.read.option("wholeFile", true).json(jsonRDD)
        if (data.count() > 0) {
          import org.apache.spark.sql.functions._
          val resultSetByGroupBy = data.groupBy(
            LogLevel
            ,MultiThreadId
+           ,Message
            ,StackTrace01
            ,StackTrace02
            ,StackTrace03
@@ -98,7 +99,8 @@ object LogAggregateExperiment {
            ,StackTrace10
            ,StackTrace11
            ,StackTrace12
-           ,StackTrace13).agg(min(Message).alias(Message))
+           ,StackTrace13).agg(count(Message).alias("Number"))
+         resultSetByGroupBy.show(UpperLimit)
 
          val dateTime = new DateTime()
          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
