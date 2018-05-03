@@ -17,7 +17,7 @@ object LogAggregateExperiment {
   val ThreadCount = "*"
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "LogAggregateExperiment"
-  val BatchDuration = 2
+  val BatchDuration = 4
   val UpperLimit = 10000
   val DateTime = "date_time"
   val LogLevel = "log_level"
