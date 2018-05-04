@@ -3,7 +3,7 @@ package jp.ac.keio.sdm.LogAggregateExperiment
 
 import kafka.serializer.StringDecoder
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.apache.spark.streaming.kafka.KafkaUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.joda.time.DateTime
@@ -36,6 +36,7 @@ object LogAggregateExperiment {
   val StackTrace11 = "stack_trace_11"
   val StackTrace12 = "stack_trace_12"
   val StackTrace13 = "stack_trace_13"
+  val Number = "Number"
   val PartitionNum = 1
   // Development Mode.
   // val SavingDirectoryForErrorLog = "data/text"
@@ -61,9 +62,9 @@ object LogAggregateExperiment {
 
     val Array(brokers, topics) = args
     // Development Mode.
-    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // Product Mode.
-    // val sparkConf = new SparkConf().setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     val spark = SparkSession
       .builder()
@@ -99,8 +100,7 @@ object LogAggregateExperiment {
            ,StackTrace10
            ,StackTrace11
            ,StackTrace12
-           ,StackTrace13).agg(count(Message).alias("Number"))
-         resultSetByGroupBy.show(UpperLimit)
+           ,StackTrace13).agg(count(Message).alias(Number))
 
          val dateTime = new DateTime()
          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
@@ -122,11 +122,11 @@ object LogAggregateExperiment {
               ,StackTrace10
               ,StackTrace11
               ,StackTrace12
-              ,StackTrace13)
+              ,StackTrace13
+              ,Number)
          printingResultSetByGroupBy.show(UpperLimit)
-         // org.apache.spark.rdd#coalesce : Return a new RDD that is reduced into numPartitions partitions.
-         printingResultSetByGroupBy.rdd.coalesce(PartitionNum, true).saveAsTextFile(SavingDirectoryForErrorLog)
-         printingResultSetByGroupBy.coalesce(PartitionNum).write.mode("append")parquet(SavingDirectoryForSampleData)
+         printingResultSetByGroupBy.coalesce(PartitionNum).write.mode(SaveMode.Append).csv(SavingDirectoryForErrorLog)
+         printingResultSetByGroupBy.coalesce(PartitionNum).write.mode(SaveMode.Append).parquet(SavingDirectoryForSampleData)
        }
     })
 
