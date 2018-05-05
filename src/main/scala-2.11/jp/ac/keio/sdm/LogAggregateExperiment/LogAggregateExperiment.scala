@@ -39,9 +39,9 @@ object LogAggregateExperiment {
   val Number = "Number"
   val PartitionNum = 1
   // Development Mode.
-  // val SavingDirectoryForErrorLog = "data/text"
+  // val SavingDirectoryForErrorLog = "data/csv"
   // Product Mode.
-  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/text"
+  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/csv"
   // Development Mode.
   // val SavingDirectoryForSampleData = "data/parquet"
   // Product Mode.
