@@ -17,7 +17,7 @@ object LogAggregateExperiment {
   val ThreadCount = "*"
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "LogAggregateExperiment"
-  val BatchDuration = 4
+  val BatchDuration = 16
   val UpperLimit = 10000
   val DateTime = "date_time"
   val LogLevel = "log_level"
@@ -38,14 +38,21 @@ object LogAggregateExperiment {
   val StackTrace13 = "stack_trace_13"
   val Number = "Number"
   val PartitionNum = 1
+
   // Development Mode.
-  // val SavingDirectoryForErrorLog = "data/csv"
+  val SavingDirectoryForErrorLog = "data/csv"
   // Product Mode.
-  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/csv"
+  // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/csv"
+
   // Development Mode.
-  // val SavingDirectoryForSampleData = "data/parquet"
+  val SavingDirectoryForRawData = "data/raw_parquet"
   // Product Mode.
-  val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/raw_parquet"
+
+  // Development Mode.
+  val SavingDirectoryForAggregateData = "data/number_parquet"
+  // Product Mode.
+  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/number_parquet"
 
   def main(args: Array[String]) {
 
@@ -62,9 +69,9 @@ object LogAggregateExperiment {
 
     val Array(brokers, topics) = args
     // Development Mode.
-    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // Product Mode.
-    val sparkConf = new SparkConf().setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     val spark = SparkSession
       .builder()
@@ -79,7 +86,8 @@ object LogAggregateExperiment {
     // x._2 returns the second element of a tuple
     val lines = messages.map(_._2)
 
-    // https://spark.apache.org/docs/latest/streaming-programming-guide.html#design-patterns-for-using-foreachrdd
+       // https://spark.apache.org/docs/latest/streaming-programming-guide.html#design-patterns-for-using-foreachrdd
+       // Count according to message type.
        lines.foreachRDD(jsonRDD => {
        val data = spark.read.option("wholeFile", true).json(jsonRDD)
        if (data.count() > 0) {
@@ -102,6 +110,7 @@ object LogAggregateExperiment {
            ,StackTrace12
            ,StackTrace13).agg(count(Message).alias(Number))
 
+         // Append Exact Date and Time.
          val dateTime = new DateTime()
          val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
          val formattedDateTime = formatter.print(dateTime)
@@ -124,9 +133,13 @@ object LogAggregateExperiment {
               ,StackTrace12
               ,StackTrace13
               ,Number)
+
+         data.show(UpperLimit)
+
          printingResultSetByGroupBy.show(UpperLimit)
          printingResultSetByGroupBy.coalesce(PartitionNum).write.mode(SaveMode.Append).csv(SavingDirectoryForErrorLog)
-         printingResultSetByGroupBy.coalesce(PartitionNum).write.mode(SaveMode.Append).parquet(SavingDirectoryForSampleData)
+         data.coalesce(PartitionNum).write.mode(SaveMode.Append).parquet(SavingDirectoryForRawData)
+         printingResultSetByGroupBy.coalesce(PartitionNum).write.mode(SaveMode.Append).parquet(SavingDirectoryForAggregateData)
        }
     })
 

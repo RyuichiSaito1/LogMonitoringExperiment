@@ -3,6 +3,7 @@ package jp.ac.keio.sdm.AnomalyDetectingExperiment
 
 import java.io.File
 import java.util.Properties
+import scala.math.ceil
 
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
@@ -17,13 +18,16 @@ object AnomalyDetectingExperiment {
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "OutliersDetectingExperiment"
   val S3BacketName = "s3://aws-logs-757020086170-us-west-2"
+
   // Development Mode.
-  val SavingDirectoryForSampleData = "data/parquet"
+  val SavingDirectoryForRawData = "data/raw_parquet"
+  val SavingDirectoryForAggregateData = "data/number_parquet"
   // Product Mode.
-  // val SavingDirectoryForSampleData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/raw_parquet"
+  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/number_parquet"
+
   // Result that word's hashcode divided NumFeatures is mapped NumFeatures size.
   val NumFeatureSize = 10000
-  val KSize = 3
   // Execution frequency for choosing initial cluster centroid positions( or seeds).
   val SeedSize = 10L
   val UpperLimit = 10000
@@ -43,6 +47,7 @@ object AnomalyDetectingExperiment {
     // val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     // Product Mode.
     // val sparkConf = new SparkConf().setAppName(ApplicationName)
+
     val sc = new SparkContext(sparkConf)
 
     val spark = SparkSession
@@ -50,10 +55,15 @@ object AnomalyDetectingExperiment {
       .appName(ApplicationName)
       .getOrCreate()
     // if (new File(SavingDirectoryForSampleData).exists == false){ return }
-    val errorFileDF = spark.read.parquet(SavingDirectoryForSampleData)
+    val aggregateErrorFileDF = spark.read.parquet(SavingDirectoryForAggregateData)
     // val schema = spark.read.parquet(SavingDirectoryForSampleData).schema
     // val errorFileDF = spark.readStream.schema(schema).parquet(SavingDirectoryForSampleData)
+    val criterionNumber = aggregateErrorFileDF.filter(aggregateErrorFileDF("Number") > 1).count()
+    println(criterionNumber)
+    val temporaryKSize = criterionNumber * 1.5
+    val KSize = ceil(temporaryKSize).toInt
 
+    val errorFileDF = spark.read.parquet(SavingDirectoryForRawData)
     val analysedMessageDF = errorFileDF.withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
     val analysedStackTrace01DF = analysedMessageDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), "\\.", " "))
     val analysedDF = analysedStackTrace01DF.withColumn("analysedStackTrace02", regexp_replace(errorFileDF("stack_trace_02"), "\\.", " "))
@@ -107,7 +117,7 @@ object AnomalyDetectingExperiment {
     val CalculateSquaredDistance = udf(squaredDistance)
     val squredDistanceData = transformedData.withColumn("square_distance", CalculateSquaredDistance(col("prediction"), col("features"))).distinct()
     squredDistanceData.show(UpperLimit)
-    
+
     val predeictionData = squredDistanceData.groupBy("prediction").agg(min("square_distance"))
     predeictionData.show(UpperLimit)
     val renamedPredictionData = predeictionData.withColumnRenamed("min(square_distance)", "square_distance")
@@ -118,10 +128,10 @@ object AnomalyDetectingExperiment {
     for (i <- 0 to KSize - 1) {
       if (finalData.groupBy("prediction").count().filter(finalData("prediction") === i) == 0) return
       val temporaryData = finalData.filter(finalData("prediction") === i).select("messages").first().toString()
-      messages = messages.concat(temporaryData)
+      messages = messages + "\\n".concat(temporaryData)
     }
     System.out.println("String =" + messages)
-    val finalMessages = "Hello, I'm a Anomalies Detector, We are sending you three representative messages.\nPlease check following messages and stack traces.\n\n" + messages.replace(",","\n\nMessage").replace("[[","[Message[")
+    val finalMessages = "Hello, I'm a Anomalies Detector, We are sending you " + KSize + " representative messages.\nPlease check following messages and stack traces.\n\n" + messages.replace(",","\n\nMessage").replace("[[","[Message[")
     println(finalMessages)
 
     val amazonSNS = new AmazonSNS();
@@ -129,10 +139,12 @@ object AnomalyDetectingExperiment {
     amazonSNS.sendMessage("email", EMail, finalMessages)
 
     // Development Mode.
-    // deleteDirectoryRecursively(new File(SavingDirectoryForSampleData))
+    // deleteDirectoryRecursively(new File(SavingDirectoryForRawData))
+    // deleteDirectoryRecursively(new File(SavingDirectoryForAggregateData))
     // Product Mode.
     // val deleteS3Objcet = new DeleteS3Object
-    // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForSampleData))
+    // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForRawData))
+    // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForAggregateData))
     sc.stop()
   }
 
