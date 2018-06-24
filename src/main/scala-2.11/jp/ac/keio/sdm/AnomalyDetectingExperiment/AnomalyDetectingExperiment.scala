@@ -3,7 +3,6 @@ package jp.ac.keio.sdm.AnomalyDetectingExperiment
 
 import java.io.File
 import java.util.Properties
-import scala.math.ceil
 
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
@@ -11,6 +10,8 @@ import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.regexp_replace
 import org.apache.spark.{SparkConf, SparkContext}
+
+import scala.math.ceil
 
 object AnomalyDetectingExperiment {
 
@@ -58,13 +59,17 @@ object AnomalyDetectingExperiment {
     val aggregateErrorFileDF = spark.read.parquet(SavingDirectoryForAggregateData)
     // val schema = spark.read.parquet(SavingDirectoryForSampleData).schema
     // val errorFileDF = spark.readStream.schema(schema).parquet(SavingDirectoryForSampleData)
-    val criterionNumber = aggregateErrorFileDF.filter(aggregateErrorFileDF("Number") > 1).count()
-    println(criterionNumber)
-    val temporaryKSize = criterionNumber * 1.5
+    val multiplexDF = aggregateErrorFileDF.filter(aggregateErrorFileDF("Number") > 1)
+    multiplexDF.createOrReplaceTempView("multiplexView")
+    val notifyingMultiplexDF = spark.sql("SELECT CONCAT(date_time, ' ', log_level, ' ', multi_thread_id, ' ', message, ' ', stack_trace_01, ' ', stack_trace_02) AS messages FROM multiplexView")
+    val multiplexList = notifyingMultiplexDF.select("messages").collectAsList()
+    val criterionNumber = multiplexDF.count()
+    val temporaryKSize = criterionNumber
     val KSize = ceil(temporaryKSize).toInt
 
-    val errorFileDF = spark.read.parquet(SavingDirectoryForRawData)
-    val analysedMessageDF = errorFileDF.withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
+    // val errorFileDF = spark.read.parquet(SavingDirectoryForRawData)
+    val errorFileDF = spark.read.parquet(SavingDirectoryForAggregateData)
+    val analysedMessageDF = errorFileDF.filter(errorFileDF("Number") < 2).withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
     val analysedStackTrace01DF = analysedMessageDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), "\\.", " "))
     val analysedDF = analysedStackTrace01DF.withColumn("analysedStackTrace02", regexp_replace(errorFileDF("stack_trace_02"), "\\.", " "))
     analysedDF.createOrReplaceTempView("errorFile")
@@ -126,10 +131,14 @@ object AnomalyDetectingExperiment {
     //val messages = finalData.select("messages").collectAsList().toString
     var messages = ""
     for (i <- 0 to KSize - 1) {
+      messages = messages + "\\n".concat(multiplexList.get(i).toString())
+    }
+    for (i <- 0 to KSize - 1) {
       if (finalData.groupBy("prediction").count().filter(finalData("prediction") === i) == 0) return
       val temporaryData = finalData.filter(finalData("prediction") === i).select("messages").first().toString()
       messages = messages + "\\n".concat(temporaryData)
     }
+
     System.out.println("String =" + messages)
     val finalMessages = "Hello, I'm a Anomalies Detector, We are sending you " + KSize + " representative messages.\nPlease check following messages and stack traces.\n\n" + messages.replace(",","\n\nMessage").replace("[[","[Message[")
     println(finalMessages)
