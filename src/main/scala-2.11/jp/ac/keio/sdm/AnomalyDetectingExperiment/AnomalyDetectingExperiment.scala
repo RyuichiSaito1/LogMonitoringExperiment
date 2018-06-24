@@ -59,15 +59,18 @@ object AnomalyDetectingExperiment {
     val aggregateErrorFileDF = spark.read.parquet(SavingDirectoryForAggregateData)
     // val schema = spark.read.parquet(SavingDirectoryForSampleData).schema
     // val errorFileDF = spark.readStream.schema(schema).parquet(SavingDirectoryForSampleData)
+    // Create multiplex messages Dataframe.
     val multiplexDF = aggregateErrorFileDF.filter(aggregateErrorFileDF("Number") > 1)
     multiplexDF.createOrReplaceTempView("multiplexView")
     val notifyingMultiplexDF = spark.sql("SELECT CONCAT(date_time, ' ', log_level, ' ', multi_thread_id, ' ', message, ' ', stack_trace_01, ' ', stack_trace_02) AS messages FROM multiplexView")
     val multiplexList = notifyingMultiplexDF.select("messages").collectAsList()
+    // Define k-means size.
     val criterionNumber = multiplexDF.count()
     val temporaryKSize = criterionNumber
     val KSize = ceil(temporaryKSize).toInt
 
     // val errorFileDF = spark.read.parquet(SavingDirectoryForRawData)
+    // Create clustering messages Dataframe except for multiplex messages.
     val errorFileDF = spark.read.parquet(SavingDirectoryForAggregateData)
     val analysedMessageDF = errorFileDF.filter(errorFileDF("Number") < 2).withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
     val analysedStackTrace01DF = analysedMessageDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), "\\.", " "))
@@ -130,9 +133,11 @@ object AnomalyDetectingExperiment {
     finalData.show(UpperLimit)
     //val messages = finalData.select("messages").collectAsList().toString
     var messages = ""
+    // Get multiplex messages.
     for (i <- 0 to KSize - 1) {
       messages = messages + "\\n".concat(multiplexList.get(i).toString())
     }
+    // Get clustering messages.
     for (i <- 0 to KSize - 1) {
       if (finalData.groupBy("prediction").count().filter(finalData("prediction") === i) == 0) return
       val temporaryData = finalData.filter(finalData("prediction") === i).select("messages").first().toString()
