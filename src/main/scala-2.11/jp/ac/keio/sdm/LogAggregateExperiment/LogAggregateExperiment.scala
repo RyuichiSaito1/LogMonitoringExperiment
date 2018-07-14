@@ -5,7 +5,7 @@ import kafka.serializer.StringDecoder
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.apache.spark.streaming.kafka.KafkaUtils
-import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.streaming.{Duration, StreamingContext}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
@@ -17,7 +17,7 @@ object LogAggregateExperiment {
   val ThreadCount = "*"
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "LogAggregateExperiment"
-  val BatchDuration = 16
+  val BatchDuration = new Duration(16 * 1000)
   val UpperLimit = 10000
   val DateTime = "date_time"
   val LogLevel = "log_level"
@@ -40,19 +40,14 @@ object LogAggregateExperiment {
   val PartitionNum = 1
 
   // Development Mode.
-  val SavingDirectoryForErrorLog = "data/csv"
+  // val SavingDirectoryForErrorLog = "data/csv"
   // Product Mode.
-  // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/csv"
+  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/csv"
 
   // Development Mode.
-  val SavingDirectoryForRawData = "data/raw_parquet"
+  // val SavingDirectoryForAggregateData = "data/parquet"
   // Product Mode.
-  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/raw_parquet"
-
-  // Development Mode.
-  val SavingDirectoryForAggregateData = "data/number_parquet"
-  // Product Mode.
-  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/number_parquet"
+  val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
 
   def main(args: Array[String]) {
 
@@ -69,10 +64,10 @@ object LogAggregateExperiment {
 
     val Array(brokers, topics) = args
     // Development Mode.
-    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // Product Mode.
-    // val sparkConf = new SparkConf().setAppName(ApplicationName)
-    val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
+    val sparkConf = new SparkConf().setAppName(ApplicationName)
+    val ssc = new StreamingContext(sparkConf, BatchDuration)
     val spark = SparkSession
       .builder()
       .appName(ApplicationName)
@@ -138,7 +133,7 @@ object LogAggregateExperiment {
 
          printingResultSetByGroupBy.show(UpperLimit)
          printingResultSetByGroupBy.coalesce(PartitionNum).write.mode(SaveMode.Append).csv(SavingDirectoryForErrorLog)
-         data.coalesce(PartitionNum).write.mode(SaveMode.Append).parquet(SavingDirectoryForRawData)
+         // data.coalesce(PartitionNum).write.mode(SaveMode.Append).parquet(SavingDirectoryForAggregateData)
          printingResultSetByGroupBy.coalesce(PartitionNum).write.mode(SaveMode.Append).parquet(SavingDirectoryForAggregateData)
        }
     })

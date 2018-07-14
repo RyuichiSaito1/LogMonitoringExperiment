@@ -21,11 +21,9 @@ object AnomalyDetectingExperiment {
   val S3BacketName = "s3://aws-logs-757020086170-us-west-2"
 
   // Development Mode.
-  val SavingDirectoryForRawData = "data/raw_parquet"
-  val SavingDirectoryForAggregateData = "data/number_parquet"
+  // val SavingDirectoryForAggregateData = "data/parquet"
   // Product Mode.
-  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/raw_parquet"
-  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/number_parquet"
+  val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
 
   // Result that word's hashcode divided NumFeatures is mapped NumFeatures size.
   val NumFeatureSize = 10000
@@ -44,10 +42,10 @@ object AnomalyDetectingExperiment {
     val EMail = properties.getProperty("EMail")
 
     // Development Mode.
-    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // val ssc = new StreamingContext(sparkConf, Seconds(BatchDuration))
     // Product Mode.
-    // val sparkConf = new SparkConf().setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setAppName(ApplicationName)
 
     val sc = new SparkContext(sparkConf)
 
@@ -69,7 +67,6 @@ object AnomalyDetectingExperiment {
     val temporaryKSize = criterionNumber
     val KSize = ceil(temporaryKSize).toInt
 
-    // val errorFileDF = spark.read.parquet(SavingDirectoryForRawData)
     // Create clustering messages Dataframe except for multiplex messages.
     val errorFileDF = spark.read.parquet(SavingDirectoryForAggregateData)
     val analysedMessageDF = errorFileDF.filter(errorFileDF("Number") < 2).withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
@@ -153,11 +150,9 @@ object AnomalyDetectingExperiment {
     amazonSNS.sendMessage("email", EMail, finalMessages)
 
     // Development Mode.
-    // deleteDirectoryRecursively(new File(SavingDirectoryForRawData))
     // deleteDirectoryRecursively(new File(SavingDirectoryForAggregateData))
     // Product Mode.
     // val deleteS3Objcet = new DeleteS3Object
-    // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForRawData))
     // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForAggregateData))
     sc.stop()
   }
