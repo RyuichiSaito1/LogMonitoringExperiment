@@ -40,14 +40,16 @@ object LogAggregateExperiment {
   val PartitionNum = 1
 
   // Development Mode.
-  // val SavingDirectoryForErrorLog = "data/csv"
+  val SavingDirectoryForErrorLog = "data/csv"
   // Product Mode.
-  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/csv"
+  // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/csv"
+  // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data_20180727/csv"
 
   // Development Mode.
-  // val SavingDirectoryForAggregateData = "data/parquet"
+  val SavingDirectoryForAggregateData = "data/parquet"
   // Product Mode.
-  val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data_20180727/parquet"
 
   def main(args: Array[String]) {
 
@@ -64,9 +66,9 @@ object LogAggregateExperiment {
 
     val Array(brokers, topics) = args
     // Development Mode.
-    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // Product Mode.
-    val sparkConf = new SparkConf().setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setAppName(ApplicationName)
     val ssc = new StreamingContext(sparkConf, BatchDuration)
     val spark = SparkSession
       .builder()
@@ -90,7 +92,7 @@ object LogAggregateExperiment {
          val resultSetByGroupBy = data.groupBy(
            LogLevel
            ,MultiThreadId
-           ,Message
+           //,Message
            ,StackTrace01
            ,StackTrace02
            ,StackTrace03
@@ -103,7 +105,10 @@ object LogAggregateExperiment {
            ,StackTrace10
            ,StackTrace11
            ,StackTrace12
-           ,StackTrace13).agg(count(Message).alias(Number))
+           ,StackTrace13)
+           .agg(
+             count(StackTrace01).alias(Number),
+             first(Message).alias(Message))
 
          // Append Exact Date and Time.
          val dateTime = new DateTime()
