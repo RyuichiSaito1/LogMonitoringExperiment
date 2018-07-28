@@ -11,7 +11,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.regexp_replace
 import org.apache.spark.{SparkConf, SparkContext}
 
-import scala.math.ceil
+import scala.math.floor
 
 object AnomalyDetectingExperiment {
 
@@ -23,7 +23,8 @@ object AnomalyDetectingExperiment {
   // Development Mode.
   // val SavingDirectoryForAggregateData = "data/parquet"
   // Product Mode.
-  val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
+  val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data_20180729/parquet"
 
   // Result that word's hashcode divided NumFeatures is mapped NumFeatures size.
   val NumFeatureSize = 10000
@@ -63,9 +64,9 @@ object AnomalyDetectingExperiment {
     val notifyingMultiplexDF = spark.sql("SELECT CONCAT(date_time, ' ', log_level, ' ', multi_thread_id, ' ', message, ' ', stack_trace_01, ' ', stack_trace_02) AS messages FROM multiplexView")
     val multiplexList = notifyingMultiplexDF.select("messages").collectAsList()
     // Define k-means size.
-    val criterionNumber = multiplexDF.count()
-    val temporaryKSize = criterionNumber
-    val KSize = ceil(temporaryKSize).toInt
+    val criterionNumber = multiplexDF.count().toInt
+    val temporaryKSize = criterionNumber / 2
+    val KSize = floor(temporaryKSize).toInt
 
     // Create clustering messages Dataframe except for multiplex messages.
     val errorFileDF = spark.read.parquet(SavingDirectoryForAggregateData)
@@ -131,7 +132,7 @@ object AnomalyDetectingExperiment {
     //val messages = finalData.select("messages").collectAsList().toString
     var messages = ""
     // Get multiplex messages.
-    for (i <- 0 to KSize - 1) {
+    for (i <- 0 to criterionNumber - 1) {
       messages = messages + "\\n".concat(multiplexList.get(i).toString())
     }
     // Get clustering messages.
