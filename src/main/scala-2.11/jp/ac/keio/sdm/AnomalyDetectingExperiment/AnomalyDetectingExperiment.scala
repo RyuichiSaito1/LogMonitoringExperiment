@@ -143,19 +143,6 @@ object AnomalyDetectingExperiment {
         messages = messages + "\r\r".concat(temporaryData)
       }
     }
-    /*var messages = ""
-    // Get multiplex messages.
-    for (i <- 0 to criterionNumber - 1) {
-      messages = messages + "\r\r".concat(multiplexList.get(i).toString())
-    }
-    if(KSize > 1) {
-      // Get clustering messages.
-      for (i <- 0 to KSize - 1) {
-        if (finalData.groupBy("prediction").count().filter(finalData("prediction") === i) == 0) return
-        val temporaryData = finalData.filter(finalData("prediction") === i).select("messages").first().toString()
-        messages = messages + "\r\r".concat(temporaryData)
-      }
-    }*/
 
     var sendingNumber = 0
     if (KSize > 1) {
@@ -166,7 +153,6 @@ object AnomalyDetectingExperiment {
 
     System.out.println("String =" + messages)
     val finalMessages = "Hello, I'm a Anomalies Detector.\rWe just have detected application failures.\rPlease check following " + sendingNumber + " messages and stack traces." + messages
-    // val finalMessages = "Hello, I'm a Anomalies Detector.\rWe just have detected application failures.\rPlease check following " + sendingNumber + " messages and stack traces." + messages.replace(",","\r\rMessage").replace("[[","[Message[")
     println(finalMessages)
 
     val amazonSNS = new AmazonSNS();
