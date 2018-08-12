@@ -1,9 +1,12 @@
 /* Copyright (c) 2017 Ryuichi Saito, Keio University. All right reserved. */
 package jp.ac.keio.sdm.AnomalyDetectingExperiment
 
-import java.io.File
 import java.util.Properties
 
+import com.amazonaws.ClientConfiguration
+import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer}
 import org.apache.spark.ml.linalg.{Vector, Vectors}
@@ -25,6 +28,7 @@ object AnomalyDetectingExperiment {
   // Product Mode.
   // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
   val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data_20180729/parquet"
+  val SavingRootDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data_20180729/parquet/"
 
   // Result that word's hashcode divided NumFeatures is mapped NumFeatures size.
   val NumFeatureSize = 10000
@@ -32,8 +36,6 @@ object AnomalyDetectingExperiment {
   val SeedSize = 10L
   val UpperLimit = 10000
   val PartitionNum = 1
-
-  val SavingDirectoryForFinalData = "data/text/final"
 
   def main(args: Array[String]) {
 
@@ -43,11 +45,24 @@ object AnomalyDetectingExperiment {
     val EMail = properties.getProperty("EMail")
 
     // Development Mode.
-    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
-    // val sc = new SparkContext(sparkConf)
-    // Product Mode.
-    val sparkConf = new SparkConf().setAppName(ApplicationName)
+    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     val sc = new SparkContext(sparkConf)
+    // Product Mode.
+    // val sparkConf = new SparkConf().setAppName(ApplicationName)
+    // val sc = new SparkContext(sparkConf)
+    properties.load(getClass.getResourceAsStream("/AwsCredentials.properties"))
+    val accessKey = properties.getProperty("accessKey")
+    val secretKey = properties.getProperty("secretKey")
+    val clientConfiguration = new ClientConfiguration()
+    clientConfiguration.setConnectionTimeout(30000)
+    val s3Client = AmazonS3ClientBuilder.standard()
+    .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
+    .withRegion(Regions.US_WEST_2)
+    .build()
+    val isBucketExist = s3Client.doesObjectExist(S3BacketName, "parquet/")
+    if (isBucketExist == true){
+      System.out.print("Bucket Exists")
+    }
 
     val spark = SparkSession
       .builder()
@@ -167,10 +182,10 @@ object AnomalyDetectingExperiment {
     sc.stop()
   }
 
-  def deleteDirectoryRecursively(file: File) {
+  /*def deleteDirectoryRecursively(file: File) {
     if (file.isDirectory)
       file.listFiles.foreach(deleteDirectoryRecursively)
     if (file.exists && !file.delete)
       throw new Exception(s"Could not delete ${file.getAbsolutePath}")
-  }
+  }*/
 }
