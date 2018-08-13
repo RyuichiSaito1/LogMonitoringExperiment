@@ -19,8 +19,15 @@ class S3Client {
     .withRegion(Regions.US_WEST_2)
     .build()
 
-  def doesObjectExist(bucketName: String, objcetName: String): Boolean = {
-    return s3Client.doesObjectExist(bucketName, objcetName)
+  def objcetList(bucketName: String, objcetName: String): Boolean = {
+    //return s3Client.doesObjectExist(bucketName, objcetName)
+    val objcetList = s3Client.listObjects(bucketName, objcetName)
+    val list = objcetList.getObjectSummaries
+    if (list.size() > 0) {
+      true
+    } else {
+      false
+    }
   }
 
   def deleteObject(bucketName: String, key: String) {

@@ -43,13 +43,14 @@ object LogAggregateExperiment {
   // val SavingDirectoryForErrorLog = "data/csv"
   // Product Mode.
   // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/csv"
-  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data_20180728/csv"
+  // val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data_20180728/csv"
+  val SavingDirectoryForErrorLog = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data_20180812/csv"
 
   // Development Mode.
   // val SavingDirectoryForAggregateData = "data/parquet"
   // Product Mode.
   // val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data/parquet"
-  val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data_20180728/parquet"
+  val SavingDirectoryForAggregateData = "s3://aws-logs-757020086170-us-west-2/elasticmapreduce/data_20180812/parquet"
 
   def main(args: Array[String]) {
 
