@@ -48,9 +48,10 @@ object AnomalyDetectingExperiment {
     // val sparkConf = new SparkConf().setAppName(ApplicationName)
     // val sc = new SparkContext(sparkConf)
     val s3Client = new S3Client
-    val isObjcetExist = s3Client.objcetList("aws-logs-757020086170-us-west-2","elasticmapreduce/")
-    if ( isObjcetExist == false){
+    val isObjcetExist = s3Client.objcetList("aws-logs-757020086170-us-west-2","elasticmapreduce/data_20180812/parquet")
+    if (isObjcetExist == true){
       System.out.println("Object existed")
+      s3Client.deleteObject("aws-logs-757020086170-us-west-2","elasticmapreduce/data_20180812/parquet")
       sc.stop()
     }
 
