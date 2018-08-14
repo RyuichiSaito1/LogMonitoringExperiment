@@ -42,11 +42,11 @@ object AnomalyDetectingExperiment {
     val EMail = properties.getProperty("EMail")
 
     // Development Mode.
-    val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
-    val sc = new SparkContext(sparkConf)
-    // Product Mode.
-    // val sparkConf = new SparkConf().setAppName(ApplicationName)
+    // val sparkConf = new SparkConf().setMaster(SparkUrl).setAppName(ApplicationName)
     // val sc = new SparkContext(sparkConf)
+    // Product Mode.
+    val sparkConf = new SparkConf().setAppName(ApplicationName)
+    val sc = new SparkContext(sparkConf)
     val s3Client = new S3Client
     val isObjcetExist = s3Client.objcetList(S3BacketName,S3ObjectName)
 
@@ -58,8 +58,6 @@ object AnomalyDetectingExperiment {
         .getOrCreate()
       // if (new File(SavingDirectoryForSampleData).exists == false){ return }
       val aggregateErrorFileDF = spark.read.parquet(SavingDirectoryForAggregateData)
-      // val schema = spark.read.parquet(SavingDirectoryForSampleData).schema
-      // val errorFileDF = spark.readStream.schema(schema).parquet(SavingDirectoryForSampleData)
       // Create multiplex messages Dataframe.
       val multiplexDF = aggregateErrorFileDF.filter(aggregateErrorFileDF("Number") > 1)
       multiplexDF.createOrReplaceTempView("multiplexView")
@@ -86,8 +84,6 @@ object AnomalyDetectingExperiment {
         val analysingDF = spark.sql("SELECT CONCAT(date_time, ' ', log_level, ' ', multi_thread_id, ' ', message, ' ', stack_trace_01, ' ', stack_trace_02) AS messages" +
           ", CONCAT(analysedMessage, ' ', analysedStackTrace01, ' ', analysedStackTrace02) AS analysedMessages FROM errorFile")
         analysingDF.show()
-        // import spark.implicits._
-        // analysingDF.map(attributes => "messages: " + attributes(0)).show()
 
         // Tokenization is the process of taking text (such as a sentence) and breaking it into individual terms (usually words).
         val tokenizer = new Tokenizer()
@@ -138,7 +134,6 @@ object AnomalyDetectingExperiment {
         val renamedPredictionData = predeictionData.withColumnRenamed("min(square_distance)", "square_distance")
         val finalData = squredDistanceData.join(renamedPredictionData, Seq("prediction", "square_distance"))
         finalData.show(UpperLimit)
-        //val messages = finalData.select("messages").collectAsList().toString
         // Get clustering messages.
         for (i <- 0 to KSize - 1) {
           if (finalData.groupBy("prediction").count().filter(finalData("prediction") === i) == 0) return
@@ -169,9 +164,6 @@ object AnomalyDetectingExperiment {
 
     // Development Mode.
     // deleteDirectoryRecursively(new File(SavingDirectoryForAggregateData))
-    // Product Mode.
-    // val deleteS3Objcet = new DeleteS3Object
-    // deleteS3Objcet.deleteS3Objcet(Array(S3BacketName, SavingDirectoryForAggregateData))
     sc.stop()
   }
 
