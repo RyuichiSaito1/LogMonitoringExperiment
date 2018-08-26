@@ -59,13 +59,13 @@ object AnomalyDetectingExperiment {
       // if (new File(SavingDirectoryForSampleData).exists == false){ return }
       val aggregateErrorFileDF = spark.read.parquet(SavingDirectoryForAggregateData)
       // Create multiplex messages Dataframe.
-      val multiplexDF = aggregateErrorFileDF.filter(aggregateErrorFileDF("Number") > 1)
+      val multiplexDF = aggregateErrorFileDF.filter(aggregateErrorFileDF("Number") > 2)
       multiplexDF.createOrReplaceTempView("multiplexView")
       val notifyingMultiplexDF = spark.sql("SELECT CONCAT(date_time, ' ', log_level, ' ', multi_thread_id, ' ', message, ' ', stack_trace_01, ' ', stack_trace_02) AS messages FROM multiplexView")
       val multiplexList = notifyingMultiplexDF.select("messages").collectAsList()
       // Define k-means size.
       val criterionNumber = multiplexDF.count().toInt
-      val temporaryKSize = criterionNumber / 2
+      val temporaryKSize = criterionNumber / 3
       val KSize = floor(temporaryKSize).toInt
 
       var messages = ""
@@ -77,7 +77,7 @@ object AnomalyDetectingExperiment {
       if (KSize > 1) {
         // Create clustering messages Dataframe except for multiplex messages.
         val errorFileDF = spark.read.parquet(SavingDirectoryForAggregateData)
-        val analysedMessageDF = errorFileDF.filter(errorFileDF("Number") < 2).withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
+        val analysedMessageDF = errorFileDF.filter(errorFileDF("Number") < 3).withColumn("analysedMessage", regexp_replace(errorFileDF("message"), "\\.", " "))
         val analysedStackTrace01DF = analysedMessageDF.withColumn("analysedStackTrace01", regexp_replace(errorFileDF("stack_trace_01"), "\\.", " "))
         val analysedDF = analysedStackTrace01DF.withColumn("analysedStackTrace02", regexp_replace(errorFileDF("stack_trace_02"), "\\.", " "))
         analysedDF.createOrReplaceTempView("errorFile")
