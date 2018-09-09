@@ -19,7 +19,7 @@ object AnomalyDetectingExperiment {
   val SparkUrl = "local[" + ThreadCount + "]"
   val ApplicationName = "OutliersDetectingExperiment"
   val S3BacketName = "aws-logs-757020086170-us-west-2"
-  val S3ObjectName = "elasticmapreduce/data_20180814/parquet"
+  val S3ObjectName = "elasticmapreduce/data_20180814/parquet/"
 
   // Development Mode.
   // val SavingDirectoryForAggregateData = "data/number_parquet"
@@ -65,7 +65,7 @@ object AnomalyDetectingExperiment {
       val multiplexList = notifyingMultiplexDF.select("messages").collectAsList()
       // Define k-means size.
       val criterionNumber = multiplexDF.count().toInt
-      val temporaryKSize = criterionNumber / 3
+      val temporaryKSize = criterionNumber / 2
       val KSize = floor(temporaryKSize).toInt
 
       var messages = ""
